@@ -1,39 +1,39 @@
 import streamlit as st
 import pandas as pd
 
-st.title("Calculadora de Precio de Fórmulas")
+st.title("Calculadora de Fórmulas - Buscador Avanzado")
 
-archivo = st.file_uploader("Sube tu archivo Excel con materias primas y precios", type=["xlsx"])
+# Simulamos la carga del archivo Excel
+df = pd.read_excel("materias_primas.xlsx")
+df['%'] = 0.0
 
-if archivo is None:
-    archivo = 'materias_primas.xlsx'  # usar archivo local si no se sube ninguno
+# 🔍 Multiselect con búsqueda
+seleccionadas = st.multiselect(
+    "Busca y selecciona las materias primas",
+    options=df["Materia Prima"].tolist(),
+    help="Puedes escribir para buscar por nombre"
+)
 
+# 📋 Filtramos las seleccionadas
+df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
 
-if archivo:
-    df = pd.read_excel(archivo)
-    st.write("Materias primas cargadas:", df)
+if not df_filtrado.empty:
+    st.markdown("### Materias primas seleccionadas")
+    df_editado = st.data_editor(
+        df_filtrado[["Materia Prima", "Precio €/kg", "%"]],
+        use_container_width=True,
+        num_rows="dynamic",
+        key="formula_editor"
+    )
 
-    if 'Materia Prima' in df.columns and 'Precio €/kg' in df.columns:
-        materias_primas = df['Materia Prima'].tolist()
-        precios = df.set_index('Materia Prima')['Precio €/kg'].to_dict()
+    total_pct = df_editado["%"].sum()
+    st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
-        st.subheader("Construcción de la fórmula")
-
-        porcentaje_formula = {}
-        total_porcentaje = 0
-
-        for materia in materias_primas:
-            porcentaje = st.number_input(f"% de {materia}", min_value=0.0, max_value=100.0, step=0.1)
-            porcentaje_formula[materia] = porcentaje
-            total_porcentaje += porcentaje
-
-        st.write(f"Suma total del porcentaje: {total_porcentaje:.2f}%")
-
-        if st.button("Calcular precio de la fórmula"):
-            if abs(total_porcentaje - 100) > 0.01:
-                st.error("La suma de los porcentajes debe ser 100%")
-            else:
-                precio_total = sum((porcentaje_formula[mat] / 100) * precios[mat] for mat in materias_primas)
-                st.success(f"Precio por kg de la fórmula: {precio_total:.2f} €")
+    if abs(total_pct - 100) > 0.01:
+        st.warning("La suma debe ser 100% para calcular el precio.")
     else:
-        st.error("El archivo debe tener las columnas 'Materia Prima' y 'Precio €/kg'")
+        df_editado["Subtotal"] = (df_editado["Precio €/kg"] * df_editado["%"]) / 100
+        total_precio = df_editado["Subtotal"].sum()
+        st.success(f"💰 Precio por kg de la fórmula: {total_precio:.2f} €")
+else:
+    st.info("Selecciona materias primas desde el buscador para comenzar.")
