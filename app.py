@@ -65,29 +65,30 @@ if not df_filtrado.empty:
     else:
         st.subheader("📊 Resultados")
 
-	precio, composicion = calcular_resultado_formula(df_editado, columnas_composicion)
-	st.success(f"💰 Precio por kg de la fórmula: {precio:.2f} €")
+        precio, composicion = calcular_resultado_formula(df_editado, columnas_composicion)
+        st.success(f"💰 Precio por kg de la fórmula: {precio:.2f} €")
 
-	# ✅ Checkbox para mostrar solo parámetros > 0
-	filtrar_no_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
+        # ✅ Checkbox para mostrar solo parámetros > 0
+        filtrar_no_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 
-	if filtrar_no_ceros:
-    		composicion = composicion[composicion["Cantidad %"] > 0]
+        if filtrar_no_ceros:
+            composicion = composicion[composicion["Cantidad %"] > 0]
 
-	# 🖼 Centramos la tabla con ancho limitado
-	with st.container():
-    		st.markdown("<div style='max-width: 700px; margin: auto;'>", unsafe_allow_html=True)
+        # 🖼 Centramos la tabla con ancho limitado y autosize de columnas
+        with st.container():
+            st.markdown("<div style='max-width: 700px; margin: auto;'>", unsafe_allow_html=True)
 
-    		st.dataframe(
-        		composicion,
-        		use_container_width=True,
-        		hide_index=False,
-        		column_config={
-            			col: st.column_config.Column(width="auto") for col in composicion.columns
-        		}
-    		)
+            st.dataframe(
+                composicion,
+                use_container_width=True,
+                hide_index=False,
+                column_config={
+                    col: st.column_config.Column(width="auto") for col in composicion.columns
+                }
+            )
 
-    		st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
 
 
 
