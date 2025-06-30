@@ -1,111 +1,45 @@
 import streamlit as st
-import pandas as pd
-
+from data_loader import cargar_datos
+from editor import mostrar_editor_formula
+from resultados import mostrar_resultados
 from families import obtener_familias_parametros
-from formula_resultados import calcular_resultado_formula
 
-st.set_page_config(layout="wide")
-st.title("Calculadora de Fórmulas - Composición + Coste")
 
-archivo = st.file_uploader("Sube el archivo de materias primas (.xlsx)", type=["xlsx"])
-if archivo:
-    df = pd.read_excel(archivo)
-else:
-    df = pd.read_excel("materias_primas.xlsx")
+def main():
+    st.set_page_config(layout="wide")
+    st.title("Calculadora de Fórmulas - Composición + Coste")
 
-df["%"] = 0.0
+    archivo = st.file_uploader("Sube el archivo de materias primas (.xlsx)", type=["xlsx"])
+    df = cargar_datos(archivo)
 
-seleccionadas = st.multiselect(
-    "Busca y selecciona las materias primas",
-    options=df["Materia Prima"].dropna().tolist(),
-    help="Puedes escribir para buscar por nombre"
-)
-
-df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
-
-if not df_filtrado.empty:
-    st.subheader("🧪 Fórmula editable")
-
-    columnas_mostrar = ["Materia Prima", "Precio €/kg", "%"]
-    columnas_composicion_default = obtener_familias_parametros()
-    columnas_composicion = [col for sublist in columnas_composicion_default.values() for col in sublist]
-    columnas_mostrar += [col for col in df.columns if col not in columnas_mostrar and col in columnas_composicion]
-
-    df_editado = st.data_editor(
-        df_filtrado[columnas_mostrar],
-        use_container_width=True,
-        key="formula_editor"
+    seleccionadas = st.multiselect(
+        "Busca y selecciona las materias primas",
+        options=df["Materia Prima"].dropna().tolist(),
+        help="Puedes escribir para buscar por nombre"
     )
 
-    total_pct = df_editado["%"].sum()
-    st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
+    if not seleccionadas:
+        st.info("Selecciona materias primas desde el buscador para comenzar.")
+        return
 
-    familias_disponibles = obtener_familias_parametros()
+    st.subheader("🧪 Fórmula editable")
+    df_editado, total_pct = mostrar_editor_formula(df, seleccionadas)
 
-    mostrar_todo = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
+    if df_editado is not None:
+        mostrar_todo = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 
-    if not mostrar_todo:
-        familias_seleccionadas = st.multiselect(
-            "Selecciona las familias de parámetros a mostrar",
-            list(familias_disponibles.keys()),
-            default=list(familias_disponibles.keys())
-        )
-    else:
-        familias_seleccionadas = list(familias_disponibles.keys())
-
-    columnas_composicion = []
-    for fam in familias_seleccionadas:
-        columnas_composicion.extend(familias_disponibles[fam])
-
-    if abs(total_pct - 100) > 0.01:
-        st.warning("La suma de los porcentajes debe ser 100% para calcular.")
-    else:
-        st.subheader("📊 Resultados")
-
-        precio, composicion = calcular_resultado_formula(df_editado, columnas_composicion)
-        st.success(f"💰 Precio por kg de la fórmula: {precio:.2f} €")
-
+        familias = obtener_familias_parametros()
         if mostrar_todo:
-            composicion = composicion[composicion["Cantidad %"] > 0]
-            composicion = composicion[composicion.index != ""]
-
-        if not composicion.empty:
-            st.markdown("#### 📜 Composición técnica (kg/100kg)")
-            composicion_formateada = composicion.reset_index()
-            composicion_formateada.columns = ["Parámetro", "% p/p"]
-
-            st.markdown("""
-            <style>
-            .styled-table {
-                border-collapse: collapse;
-                margin: 0 auto;
-                font-size: 0.95em;
-                min-width: 500px;
-                border-radius: 5px 5px 0 0;
-                overflow: hidden;
-                text-align: center;
-            }
-            .styled-table thead tr {
-                background-color: #009879;
-                color: #ffffff;
-            }
-            .styled-table tbody tr:nth-child(even) {
-                background-color: #2e2e2e;
-            }
-            .styled-table tbody tr:nth-child(odd) {
-                background-color: #1e1e1e;
-            }
-            .styled-table th, .styled-table td {
-                padding: 12px 15px;
-            }
-            </style>
-            """, unsafe_allow_html=True)
-
-            st.markdown(
-                composicion_formateada.to_html(index=False, classes="styled-table"),
-                unsafe_allow_html=True
-            )
+            columnas = [col for cols in familias.values() for col in cols]
         else:
-            st.info("No hay parámetros con cantidad > 0% en la fórmula.")
-else:
-    st.info("Selecciona materias primas desde el buscador para comenzar.")
+            seleccionadas_familias = st.multiselect("Selecciona familias", list(familias), default=list(familias))
+            columnas = [col for fam in seleccionadas_familias for col in familias[fam]]
+
+        if abs(total_pct - 100) > 0.01:
+            st.warning("La suma de los porcentajes debe ser 100% para calcular.")
+        else:
+            mostrar_resultados(df_editado, columnas, mostrar_todo)
+
+
+if __name__ == "__main__":
+    main()
