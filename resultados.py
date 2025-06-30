@@ -1,7 +1,7 @@
 import streamlit as st
 from formula_resultados import calcular_resultado_formula
 
-def mostrar_resultados(df_editado, columnas_composicion, mostrar_todo):
+def mostrar_resultados(df_editado, columnas_composicion):
     st.subheader("📊 Resultados")
 
     precio, composicion = calcular_resultado_formula(df_editado, columnas_composicion)
