@@ -7,9 +7,7 @@ def mostrar_resultados(df_editado, columnas_composicion, mostrar_todo):
     precio, composicion = calcular_resultado_formula(df_editado, columnas_composicion)
     st.success(f"💰 Precio por kg de la fórmula: {precio:.2f} €")
 
-    if mostrar_todo:
-        composicion = composicion[composicion["Cantidad %"] > 0]
-        composicion = composicion[composicion.index != ""]
+    composicion = composicion[composicion.index != ""]
 
     if not composicion.empty:
         composicion_formateada = composicion.reset_index()
