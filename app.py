@@ -74,20 +74,12 @@ if not df_filtrado.empty:
         if not composicion.empty:
             st.markdown("#### 🧾 Composición técnica (kg/100kg)")
 
+            # Centramos tabla y usamos st.table para 2 columnas
             with st.container():
-                st.markdown("<div style='max-width: 600px; margin: auto;'>", unsafe_allow_html=True)
-                st.dataframe(
-                    composicion,
-                    use_container_width=True,
-                    hide_index=False,
-                    column_config={
-                        "Cantidad %": st.column_config.NumberColumn(format="%.3f")
-                    },
-                    height=400
-                )
+                st.markdown("<div style='max-width: 500px; margin: auto;'>", unsafe_allow_html=True)
+                st.table(composicion)
                 st.markdown("</div>", unsafe_allow_html=True)
         else:
             st.info("No hay parámetros con cantidad > 0% en la fórmula.")
-
 else:
     st.info("Selecciona materias primas desde el buscador para comenzar.")
