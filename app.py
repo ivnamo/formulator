@@ -48,7 +48,7 @@ if not df_filtrado.empty:
     familias_seleccionadas = st.multiselect(
         "Selecciona las familias de parámetros a mostrar",
         list(familias_disponibles.keys()),
-        default=["Macronutriente", "Fracción Orgánica"]
+        default=list(familias_disponibles.keys())  # ✅ Mostrar todas por defecto
     )
 
     # Construcción de columnas técnicas a mostrar
