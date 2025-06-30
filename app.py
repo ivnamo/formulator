@@ -3,13 +3,38 @@ from data_loader import cargar_datos
 from editor import mostrar_editor_formula
 from resultados import mostrar_resultados
 from families import obtener_familias_parametros
+import pandas as pd
+
+def gestionar_materias_primas(df):
+    st.subheader("🗞 CRUD de Materias Primas")
+
+    if "materias_df" not in st.session_state:
+        st.session_state["materias_df"] = df.copy()
+
+    edited_df = st.data_editor(
+        st.session_state["materias_df"],
+        use_container_width=True,
+        num_rows="dynamic",
+        key="editor_crud"
+    )
+
+    if st.button("📎 Guardar cambios"):
+        st.session_state["materias_df"] = edited_df
+        edited_df.to_excel("materias_primas.xlsx", index=False)
+        st.success("Cambios guardados correctamente.")
 
 def main():
     st.set_page_config(layout="wide")
     st.title("Calculadora de Fórmulas - Composición + Coste")
 
+    menu = st.sidebar.radio("Navegación", ["Formulación", "CRUD Materias Primas"])
+
     archivo = st.file_uploader("Sube el archivo de materias primas (.xlsx)", type=["xlsx"])
     df = cargar_datos(archivo)
+
+    if menu == "CRUD Materias Primas":
+        gestionar_materias_primas(df)
+        return
 
     seleccionadas = st.multiselect(
         "Busca y selecciona las materias primas",
