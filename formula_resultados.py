@@ -18,9 +18,12 @@ def calcular_resultado_formula(df_editado, columnas_composicion):
     df_filtrado["Subtotal"] = (df_filtrado["Precio €/kg"] * df_filtrado["%"]) / 100
     precio_total = df_filtrado["Subtotal"].sum()
 
-    for col in columnas_composicion:
-        if col in df_filtrado.columns:
-            df_filtrado[col] = (df_filtrado[col] * df_filtrado["%"]) / 100
+    # Asegurar que solo se usen columnas que existen realmente
+    columnas_existentes = [col for col in columnas_composicion if col in df_filtrado.columns]
 
-    composicion = df_filtrado[columnas_composicion].sum().to_frame(name="Cantidad %")
+    # Inicializar columnas faltantes con 0.0 (opcional y seguro para filas nuevas)
+    for col in columnas_existentes:
+        df_filtrado[col] = (df_filtrado[col] * df_filtrado["%"]) / 100
+
+    composicion = df_filtrado[columnas_existentes].sum().to_frame(name="Cantidad %")
     return precio_total, composicion
