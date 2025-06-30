@@ -29,16 +29,21 @@ def main():
         mostrar_todo = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 
         familias = obtener_familias_parametros()
+        seleccionadas_familias = st.multiselect("Selecciona familias", list(familias), default=list(familias))
+        columnas = [col for fam in seleccionadas_familias for col in familias[fam]]
+
         if mostrar_todo:
-            columnas = [col for cols in familias.values() for col in cols]
+            columnas_filtradas = columnas
         else:
-            seleccionadas_familias = st.multiselect("Selecciona familias", list(familias), default=list(familias))
-            columnas = [col for fam in seleccionadas_familias for col in familias[fam]]
+            columnas_filtradas = [
+                col for col in columnas
+                if col in df_editado.columns and (df_editado[col] * df_editado["%"] / 100).sum() > 0
+            ]
 
         if abs(total_pct - 100) > 0.01:
             st.warning("La suma de los porcentajes debe ser 100% para calcular.")
         else:
-            mostrar_resultados(df_editado, columnas, mostrar_todo)
+            mostrar_resultados(df_editado, columnas_filtradas, mostrar_todo)
 
 
 if __name__ == "__main__":
