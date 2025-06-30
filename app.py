@@ -30,10 +30,11 @@ df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
 if not df_filtrado.empty:
     st.subheader("🧪 Fórmula editable")
 
-    # Editor con columnas básicas para poder seleccionar y editar % y añadir filas
-    columnas_basicas = ["Materia Prima", "Precio €/kg", "%"]
+    columnas_editables = ["Materia Prima", "Precio €/kg", "%"]
+    df_editable = df_filtrado[columnas_editables].reset_index(drop=True)
+
     df_editado = st.data_editor(
-        df_filtrado[columnas_basicas],
+        df_editable,
         use_container_width=True,
         num_rows="dynamic",  # Permite añadir y borrar filas
         key="formula_editor"
@@ -55,13 +56,24 @@ if not df_filtrado.empty:
     for fam in familias_seleccionadas:
         columnas_composicion.extend(familias_disponibles[fam])
 
-    # Cálculo solo si el total es 100%
     if abs(total_pct - 100) > 0.01:
         st.warning("La suma de los porcentajes debe ser 100% para calcular.")
     else:
         st.subheader("📊 Resultados")
 
-        precio, composicion = calcular_resultado_formula(df_editado, columnas_composicion)
+        # Unimos el df_editado con los datos técnicos originales
+        df_completo = pd.merge(
+            df_editado,
+            df,
+            on="Materia Prima",
+            how="left",
+            suffixes=("", "_original")
+        )
+
+        # Limpiamos columnas duplicadas (del merge)
+        df_completo = df_completo.drop(columns=[col for col in df_completo.columns if col.endswith("_original")])
+
+        precio, composicion = calcular_resultado_formula(df_completo, columnas_composicion)
         st.success(f"💰 Precio por kg de la fórmula: {precio:.2f} €")
 
         # Checkbox para mostrar solo parámetros > 0
@@ -70,22 +82,19 @@ if not df_filtrado.empty:
         if filtrar_no_ceros:
             composicion = composicion[composicion["Cantidad %"] > 0]
 
-        # Mostrar tabla centrada y con autosize de columnas
-        with st.container():
-            st.markdown("<div style='max-width: 700px; margin: auto;'>", unsafe_allow_html=True)
-
-            st.dataframe(
-                composicion,
-                use_container_width=True,
-                hide_index=False,
-                column_config={
-                    col: st.column_config.Column(width="auto") for col in composicion.columns
-                }
-            )
-
-            st.markdown("</div>", unsafe_allow_html=True)
-
-
-
+        if composicion.empty:
+            st.info("No hay parámetros con cantidad > 0% en la fórmula.")
+        else:
+            with st.container():
+                st.markdown("<div style='max-width: 700px; margin: auto;'>", unsafe_allow_html=True)
+                st.dataframe(
+                    composicion,
+                    use_container_width=True,
+                    hide_index=False,
+                    column_config={
+                        col: st.column_config.Column(width="auto") for col in composicion.columns
+                    }
+                )
+                st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.info("Selecciona materias primas desde el buscador para comenzar.")
