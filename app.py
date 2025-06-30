@@ -30,18 +30,14 @@ df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
 if not df_filtrado.empty:
     st.subheader("🧪 Fórmula editable")
 
-    # 👇 Construimos columnas base + composición seleccionada
-    columnas_mostrar = ["Materia Prima", "Precio €/kg", "%"]
-    columnas_mostrar += [col for col in df.columns if col not in columnas_mostrar and col in columnas_composicion]
-
-    # 🧱 Editor de tabla con opción de añadir filas manualmente
+    # Editor con columnas básicas para poder seleccionar y editar % y añadir filas
+    columnas_basicas = ["Materia Prima", "Precio €/kg", "%"]
     df_editado = st.data_editor(
-        df_filtrado[columnas_mostrar],
+        df_filtrado[columnas_basicas],
         use_container_width=True,
-        num_rows="dynamic",  # 🟢 Permite añadir filas nuevas (ej. Agua)
+        num_rows="dynamic",  # Permite añadir y borrar filas
         key="formula_editor"
     )
-
 
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
@@ -59,7 +55,7 @@ if not df_filtrado.empty:
     for fam in familias_seleccionadas:
         columnas_composicion.extend(familias_disponibles[fam])
 
-    # Calcular si la suma de % es correcta
+    # Cálculo solo si el total es 100%
     if abs(total_pct - 100) > 0.01:
         st.warning("La suma de los porcentajes debe ser 100% para calcular.")
     else:
@@ -68,13 +64,13 @@ if not df_filtrado.empty:
         precio, composicion = calcular_resultado_formula(df_editado, columnas_composicion)
         st.success(f"💰 Precio por kg de la fórmula: {precio:.2f} €")
 
-        # ✅ Checkbox para mostrar solo parámetros > 0
+        # Checkbox para mostrar solo parámetros > 0
         filtrar_no_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 
         if filtrar_no_ceros:
             composicion = composicion[composicion["Cantidad %"] > 0]
 
-        # 🖼 Centramos la tabla con ancho limitado y autosize de columnas
+        # Mostrar tabla centrada y con autosize de columnas
         with st.container():
             st.markdown("<div style='max-width: 700px; margin: auto;'>", unsafe_allow_html=True)
 
@@ -88,7 +84,6 @@ if not df_filtrado.empty:
             )
 
             st.markdown("</div>", unsafe_allow_html=True)
-
 
 
 
