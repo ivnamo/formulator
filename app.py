@@ -75,7 +75,7 @@ if not df_filtrado.empty:
             composicion_formateada = composicion.reset_index()
             composicion_formateada.columns = ["Parámetro", "% p/p"]
 
-            st.markdown(\"""
+            st.markdown(
                 <style>
                 .styled-table {
                     border-collapse: collapse;
@@ -100,7 +100,7 @@ if not df_filtrado.empty:
                     padding: 12px 15px;
                 }
                 </style>
-            \""", unsafe_allow_html=True)
+            , unsafe_allow_html=True)
 
             st.markdown(
                 composicion_formateada.to_html(
