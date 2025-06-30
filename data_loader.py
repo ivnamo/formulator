@@ -1,9 +1,12 @@
 import pandas as pd
+from supabase_client import supabase
 
 def cargar_datos(archivo):
-    if archivo:
+    if archivo is not None:
         df = pd.read_excel(archivo)
     else:
-        df = pd.read_excel("materias_primas.xlsx")
+        response = supabase.table("materias_primas").select("*").execute()
+        df = pd.DataFrame(response.data)
+
     df["%"] = 0.0
     return df
