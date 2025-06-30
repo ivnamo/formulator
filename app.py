@@ -36,22 +36,32 @@ if not df_filtrado.empty:
     df_editado = st.data_editor(
         df_editable,
         use_container_width=True,
-        num_rows="dynamic",  # Permite añadir y borrar filas
+        num_rows="dynamic",
         key="formula_editor"
     )
 
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
-    # Selección de familias de parámetros
     familias_disponibles = obtener_familias_parametros()
+
+    # ✅ Checkbox para filtrar por parámetros > 0
+    filtrar_no_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
+
+    # 🧲 Estado sincronizado de familias
+    if "familias_seleccionadas" not in st.session_state:
+        st.session_state.familias_seleccionadas = list(familias_disponibles.keys())
+
+    if not filtrar_no_ceros:
+        st.session_state.familias_seleccionadas = list(familias_disponibles.keys())
+
     familias_seleccionadas = st.multiselect(
         "Selecciona las familias de parámetros a mostrar",
         list(familias_disponibles.keys()),
-        default=list(familias_disponibles.keys())  # ✅ Mostrar todas por defecto
+        default=st.session_state.familias_seleccionadas,
+        key="familias_seleccionadas"
     )
 
-    # Construcción de columnas técnicas a mostrar
     columnas_composicion = []
     for fam in familias_seleccionadas:
         columnas_composicion.extend(familias_disponibles[fam])
@@ -61,7 +71,6 @@ if not df_filtrado.empty:
     else:
         st.subheader("📊 Resultados")
 
-        # Unimos el df_editado con los datos técnicos originales
         df_completo = pd.merge(
             df_editado,
             df,
@@ -70,14 +79,10 @@ if not df_filtrado.empty:
             suffixes=("", "_original")
         )
 
-        # Limpiamos columnas duplicadas (del merge)
         df_completo = df_completo.drop(columns=[col for col in df_completo.columns if col.endswith("_original")])
 
         precio, composicion = calcular_resultado_formula(df_completo, columnas_composicion)
         st.success(f"💰 Precio por kg de la fórmula: {precio:.2f} €")
-
-        # Checkbox para mostrar solo parámetros > 0
-        filtrar_no_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 
         if filtrar_no_ceros:
             composicion = composicion[composicion["Cantidad %"] > 0]
