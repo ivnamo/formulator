@@ -34,7 +34,6 @@ if not df_filtrado.empty:
     df_editado = st.data_editor(
         df_filtrado[columnas_mostrar],
         use_container_width=True,
-        num_rows="dynamic",
         key="formula_editor"
     )
 
@@ -75,38 +74,35 @@ if not df_filtrado.empty:
             composicion_formateada = composicion.reset_index()
             composicion_formateada.columns = ["Parámetro", "% p/p"]
 
-            st.markdown(
-                <style>
-                .styled-table {
-                    border-collapse: collapse;
-                    margin: 0 auto;
-                    font-size: 0.95em;
-                    min-width: 500px;
-                    border-radius: 5px 5px 0 0;
-                    overflow: hidden;
-                    text-align: left;
-                }
-                .styled-table thead tr {
-                    background-color: #009879;
-                    color: #ffffff;
-                }
-                .styled-table tbody tr:nth-child(even) {
-                    background-color: #2e2e2e;
-                }
-                .styled-table tbody tr:nth-child(odd) {
-                    background-color: #1e1e1e;
-                }
-                .styled-table th, .styled-table td {
-                    padding: 12px 15px;
-                }
-                </style>
-            , unsafe_allow_html=True)
+            st.markdown("""
+            <style>
+            .styled-table {
+                border-collapse: collapse;
+                margin: 0 auto;
+                font-size: 0.95em;
+                min-width: 500px;
+                border-radius: 5px 5px 0 0;
+                overflow: hidden;
+                text-align: center;
+            }
+            .styled-table thead tr {
+                background-color: #009879;
+                color: #ffffff;
+            }
+            .styled-table tbody tr:nth-child(even) {
+                background-color: #2e2e2e;
+            }
+            .styled-table tbody tr:nth-child(odd) {
+                background-color: #1e1e1e;
+            }
+            .styled-table th, .styled-table td {
+                padding: 12px 15px;
+            }
+            </style>
+            """, unsafe_allow_html=True)
 
             st.markdown(
-                composicion_formateada.to_html(
-                    index=False,
-                    classes="styled-table"
-                ),
+                composicion_formateada.to_html(index=False, classes="styled-table"),
                 unsafe_allow_html=True
             )
         else:
