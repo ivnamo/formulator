@@ -1,32 +1,36 @@
-
 import streamlit as st
 import pandas as pd
-
 from families import obtener_familias_parametros
 from formula_resultados import calcular_resultado_formula
 
 st.set_page_config(layout="wide")
 st.title("Calculadora de Fórmulas - Composición + Coste")
 
+# Carga de archivo
 archivo = st.file_uploader("Sube el archivo de materias primas (.xlsx)", type=["xlsx"])
 if archivo:
     df = pd.read_excel(archivo)
 else:
     df = pd.read_excel("materias_primas.xlsx")
 
-df["%"] = 0.0
+# Inicializamos columna de porcentaje si no está
+if "%" not in df.columns:
+    df["%"] = 0.0
 
+# Buscador de materias primas
 seleccionadas = st.multiselect(
     "Busca y selecciona las materias primas",
     options=df["Materia Prima"].dropna().tolist(),
     help="Puedes escribir para buscar por nombre"
 )
 
+# Filtrado
 df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
 
 if not df_filtrado.empty:
     st.subheader("🧪 Fórmula editable")
 
+    # Mostrar columnas de composición
     columnas_mostrar = ["Materia Prima", "Precio €/kg", "%"]
     columnas_composicion_default = obtener_familias_parametros()
     columnas_composicion = [col for sublist in columnas_composicion_default.values() for col in sublist]
@@ -72,14 +76,46 @@ if not df_filtrado.empty:
             composicion = composicion[composicion.index != ""]
 
         if not composicion.empty:
-            st.markdown("#### 🧾 Composición técnica (kg/100kg)")
+            st.markdown("#### 📜 Composición técnica (kg/100kg)")
 
-            # Centramos tabla y usamos st.table para 2 columnas
-            with st.container():
-                st.markdown("<div style='max-width: 500px; margin: auto;'>", unsafe_allow_html=True)
-                st.table(composicion)
-                st.markdown("</div>", unsafe_allow_html=True)
+            # Formateamos tabla
+            composicion_formateada = composicion.copy()
+            composicion_formateada.index.name = None
+            composicion_formateada.columns = ["% p/p"]
+            composicion_formateada.index.name = "Parámetro"
+            composicion_formateada["% p/p"] = composicion_formateada["% p/p"].map(lambda x: f"{x:.3f}")
+
+            html_table = composicion_formateada.to_html(
+                classes='compact-table zebra-table',
+                border=0,
+                justify='center'
+            )
+
+            style = """
+            <style>
+                .compact-table {
+                    margin-left: auto;
+                    margin-right: auto;
+                    border-collapse: collapse;
+                    font-size: 0.9rem;
+                }
+                .compact-table th, .compact-table td {
+                    padding: 6px 16px;
+                    text-align: center;
+                }
+                .zebra-table tbody tr:nth-child(odd) {
+                    background-color: #2c2c2c;
+                }
+                .zebra-table tbody tr:nth-child(even) {
+                    background-color: #1e1e1e;
+                }
+            </style>
+            """
+
+            st.markdown(style + html_table, unsafe_allow_html=True)
+
         else:
             st.info("No hay parámetros con cantidad > 0% en la fórmula.")
+
 else:
     st.info("Selecciona materias primas desde el buscador para comenzar.")
