@@ -20,8 +20,12 @@ def gestionar_materias_primas():
     if st.button("💾 Guardar cambios"):
         st.session_state["materias_df"] = edited_df
 
-        # Limpieza: reemplazar NaN por None
-        cleaned_data = edited_df.where(pd.notnull(edited_df), None).to_dict(orient="records")
+        # Limpieza: reemplazar NaN por None y asegurar strings en columnas
+        cleaned_df = edited_df.copy()
+        if "id" in cleaned_df.columns:
+            cleaned_df = cleaned_df.drop(columns=["id"])  # evitar colisión con claves primarias
+        cleaned_df = cleaned_df.where(pd.notnull(cleaned_df), None)
+        cleaned_data = cleaned_df.to_dict(orient="records")
 
         try:
             supabase.table("materias_primas").delete().neq("id", 0).execute()
