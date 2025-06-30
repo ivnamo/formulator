@@ -20,6 +20,11 @@ def gestionar_materias_primas():
     if st.button("💾 Guardar cambios"):
         st.session_state["materias_df"] = edited_df
 
+        # Validar columna obligatoria "Materia Prima"
+        if "Materia Prima" not in edited_df.columns:
+            st.error("❌ La columna obligatoria 'Materia Prima' no está presente en los datos.")
+            return
+
         # Limpieza: reemplazar NaN por None y asegurar strings en columnas
         cleaned_df = edited_df.copy()
         if "id" in cleaned_df.columns:
