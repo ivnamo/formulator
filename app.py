@@ -24,18 +24,26 @@ seleccionadas = st.multiselect(
 
 df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
 
+# Obtener todas las columnas de composición
+columnas_composicion_default = obtener_familias_parametros()
+columnas_composicion = [col for sublist in columnas_composicion_default.values() for col in sublist]
+
+# Columnas a mostrar en el editor
+columnas_mostrar = ["Materia Prima", "Precio €/kg", "%"]
+columnas_mostrar += [col for col in df.columns if col not in columnas_mostrar and col in columnas_composicion]
+
+# Botón para añadir una fila manualmente (por ejemplo: Agua)
+if st.button("➕ Añadir fila vacía"):
+    nueva_fila = pd.DataFrame([{col: 0 if col != "Materia Prima" else "Agua" for col in columnas_mostrar}])
+    df_filtrado = pd.concat([df_filtrado, nueva_fila], ignore_index=True)
+
 if not df_filtrado.empty:
     st.subheader("🧪 Fórmula editable")
-
-    columnas_mostrar = ["Materia Prima", "Precio €/kg", "%"]
-    columnas_composicion_default = obtener_familias_parametros()
-    columnas_composicion = [col for sublist in columnas_composicion_default.values() for col in sublist]
-    columnas_mostrar += [col for col in df.columns if col not in columnas_mostrar and col in columnas_composicion]
 
     df_editado = st.data_editor(
         df_filtrado[columnas_mostrar],
         use_container_width=True,
-        num_rows="dynamic",
+        num_rows="fixed",  # Evita el bug del scroll añadiendo filas accidentalmente
         key="formula_editor"
     )
 
@@ -73,41 +81,21 @@ if not df_filtrado.empty:
 
         if not composicion.empty:
             st.markdown("#### 📜 Composición técnica (kg/100kg)")
-            composicion_formateada = composicion.reset_index()
-            composicion_formateada.columns = ["Parámetro", "% p/p"]
 
-            st.markdown("""
-                <style>
-                .styled-table {
-                    border-collapse: collapse;
-                    margin: 0 auto;
-                    font-size: 0.95em;
-                    min-width: 500px;
-                    border-radius: 5px 5px 0 0;
-                    overflow: hidden;
-                    text-align: left;
-                }
-                .styled-table thead tr {
-                    background-color: #009879;
-                    color: #ffffff;
-                }
-                .styled-table tbody tr:nth-child(even) {
-                    background-color: #2e2e2e;
-                }
-                .styled-table tbody tr:nth-child(odd) {
-                    background-color: #1e1e1e;
-                }
-                .styled-table th, .styled-table td {
-                    padding: 12px 15px;
-                }
-                </style>
-            """, unsafe_allow_html=True)
+            # Renombrar columnas para claridad
+            composicion = composicion.rename(columns={"Cantidad %": "% p/p"})
+            composicion.index.name = "Parámetro"
 
+            # Estilo centrado con zebra
             st.markdown(
-                composicion_formateada.to_html(
-                    index=False,
-                    classes="styled-table"
-                ),
+                composicion.style
+                .set_table_styles([
+                    {"selector": "th", "props": [("text-align", "center")]},
+                    {"selector": "td", "props": [("text-align", "center")]},
+                ])
+                .set_properties(**{"width": "100px"})
+                .hide(axis="index")
+                .to_html(),
                 unsafe_allow_html=True
             )
         else:
