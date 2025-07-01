@@ -13,41 +13,9 @@ def gestionar_materias_primas(menu):
         response = supabase.table("materias_primas").select("*").execute()
         return pd.DataFrame(response.data)
 
-    # Carga actualizada de datos
+    # Cargar y mostrar datos iniciales
     df = cargar_materias()
     st.session_state["materias_df"] = df
-
-    edited_df = st.data_editor(
-        st.session_state["materias_df"],
-        use_container_width=True,
-        num_rows="dynamic",
-        key="editor_crud"
-    )
-
-    if st.button("💾 Guardar cambios"):
-        st.session_state["materias_df"] = edited_df
-
-        if "Materia Prima" not in edited_df.columns:
-            st.error("❌ La columna obligatoria 'Materia Prima' no está presente en los datos.")
-            return
-
-        if "id" not in edited_df.columns:
-            st.error("❌ No se encuentra la columna 'id', necesaria para el upsert.")
-            return
-
-        cleaned_df = edited_df.copy()
-        cleaned_df = cleaned_df.replace({np.nan: None})
-        cleaned_data = cleaned_df.to_dict(orient="records")
-
-        try:
-            supabase.table("materias_primas").upsert(
-                cleaned_data,
-                on_conflict=["id"]
-            ).execute()
-            st.success("Cambios guardados correctamente en Supabase.")
-            st.session_state["materias_df"] = cargar_materias()
-        except Exception as e:
-            st.error(f"❌ Error al guardar: {e}")
 
     st.markdown("---")
     st.subheader("➕ Añadir nueva materia prima")
@@ -87,3 +55,40 @@ def gestionar_materias_primas(menu):
                     st.session_state["materias_df"] = cargar_materias()
                 except Exception as e:
                     st.error(f"❌ Error al eliminar: {e}")
+
+    st.markdown("---")
+    st.subheader("✏️ Editar materias primas")
+
+    edited_df = st.data_editor(
+        st.session_state["materias_df"],
+        use_container_width=True,
+        num_rows="dynamic",
+        key="editor_crud",
+        column_config={col: st.column_config.Column(disabled=(col == "id")) for col in st.session_state["materias_df"].columns}
+    )
+
+    if st.button("💾 Guardar cambios"):
+        st.session_state["materias_df"] = edited_df
+
+        if "Materia Prima" not in edited_df.columns:
+            st.error("❌ La columna obligatoria 'Materia Prima' no está presente en los datos.")
+            return
+
+        if "id" not in edited_df.columns:
+            st.error("❌ No se encuentra la columna 'id', necesaria para el upsert.")
+            return
+
+        cleaned_df = edited_df.copy()
+        cleaned_df = cleaned_df.replace({np.nan: None})
+        cleaned_data = cleaned_df.to_dict(orient="records")
+
+        try:
+            supabase.table("materias_primas").upsert(
+                cleaned_data,
+                on_conflict=["id"]
+            ).execute()
+            st.success("Cambios guardados correctamente en Supabase.")
+            st.session_state["materias_df"] = cargar_materias()
+        except Exception as e:
+            st.error(f"❌ Error al guardar: {e}")
+
