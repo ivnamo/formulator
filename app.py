@@ -13,7 +13,17 @@ def main():
     st.set_page_config(layout="wide")
     st.title("Calculadora de Fórmulas - Composición + Coste")
 
-    menu = st.sidebar.radio("Navegación", ["FORMULATE", "CREATE", "UPDATE", "DELETE"])
+    with st.sidebar:
+        st.image("logo.png", width=180)  # Logo personalizado
+        st.markdown("### Navegación")
+        menu = st.radio("", ["FORMULATE", "CREATE", "UPDATE", "DELETE"])
+
+        st.markdown("---")
+        st.markdown("""
+        **Desarrollado por:** Iván Navarro  
+        **Versión:** 1.0.0  
+        **Fecha:** 01/07/2005
+        """)
 
     if menu == "CREATE":
         crear_materia_prima()
@@ -69,3 +79,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
