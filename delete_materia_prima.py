@@ -5,7 +5,7 @@ from supabase_client import supabase
 def eliminar_materia_prima():
     st.subheader("🗑️ Eliminar materia prima")
 
-    response = supabase.table("materias_primas").select("id, Materia Prima").execute()
+    response = supabase.table("materias_primas").select('id, "Materia Prima"').execute()
     df = pd.DataFrame(response.data)
 
     if df.empty:
