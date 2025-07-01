@@ -62,8 +62,7 @@ def gestionar_materias_primas(menu):
                 try:
                     supabase.table("materias_primas").insert([{
                         "Materia Prima": nueva_nombre,
-                        "Precio €/kg": nuevo_precio,
-                        "%": 0.0
+                        "Precio €/kg": nuevo_precio
                     }]).execute()
                     st.success("Materia prima añadida correctamente.")
                     st.rerun()
