@@ -50,16 +50,14 @@ def gestionar_materias_primas(menu):
         if "confirmar_borrado" not in st.session_state:
             st.session_state["confirmar_borrado"] = False
 
-        if st.button("Eliminar") and not st.session_state["confirmar_borrado"]:
-            st.session_state["confirmar_borrado"] = True
-
-        if st.session_state["confirmar_borrado"]:
-            with st.container():
-                st.markdown("### ⚠️ Confirmación de eliminación")
-                st.markdown(f"¿Estás seguro de que deseas eliminar **'{seleccion_id}'**?")
+        if not st.session_state["confirmar_borrado"]:
+            if st.button("Eliminar", key="iniciar_eliminacion"):
+                st.session_state["confirmar_borrado"] = True
+        else:
+            with st.warning(f"⚠️ ¿Estás seguro de que deseas eliminar '{seleccion_id}'?"):
                 col1, col2 = st.columns(2)
                 with col1:
-                    if st.button("✅ Confirmar eliminación"):
+                    if st.button("✅ Confirmar eliminación", key="confirmar_si"):
                         try:
                             supabase.table("materias_primas").delete().eq("id", int(fila.iloc[0]["id"])).execute()
                             st.success("Materia prima eliminada.")
@@ -68,7 +66,7 @@ def gestionar_materias_primas(menu):
                             st.error(f"❌ Error al eliminar: {e}")
                         st.session_state["confirmar_borrado"] = False
                 with col2:
-                    if st.button("❌ Cancelar"):
+                    if st.button("❌ Cancelar", key="cancelar"):
                         st.info("Eliminación cancelada.")
                         st.session_state["confirmar_borrado"] = False
 
