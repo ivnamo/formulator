@@ -47,3 +47,44 @@ def gestionar_materias_primas(menu):
         except Exception as e:
             st.error(f"❌ Error al guardar: {e}")
 
+    st.markdown("---")
+    st.subheader("➕ Añadir nueva materia prima")
+
+    with st.form("form_nueva_mp"):
+        nueva_nombre = st.text_input("Nombre de la Materia Prima")
+        nuevo_precio = st.number_input("Precio €/kg", min_value=0.0, step=0.01)
+        submitted = st.form_submit_button("Agregar")
+
+        if submitted:
+            if not nueva_nombre:
+                st.warning("Debes introducir un nombre.")
+            else:
+                try:
+                    supabase.table("materias_primas").insert([{
+                        "Materia Prima": nueva_nombre,
+                        "Precio €/kg": nuevo_precio,
+                        "%": 0.0
+                    }]).execute()
+                    st.success("Materia prima añadida correctamente.")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Error al añadir: {e}")
+
+    st.markdown("---")
+    st.subheader("🗑️ Eliminar materia prima")
+    materias_disponibles = st.session_state["materias_df"][["id", "Materia Prima"]]
+
+    if not materias_disponibles.empty:
+        seleccion_id = st.selectbox("Selecciona una materia prima para eliminar", materias_disponibles["Materia Prima"])
+        fila = materias_disponibles[materias_disponibles["Materia Prima"] == seleccion_id]
+
+        if st.button("Eliminar"):
+            if not fila.empty:
+                try:
+                    supabase.table("materias_primas").delete().eq("id", int(fila.iloc[0]["id"])).execute()
+                    st.success("Materia prima eliminada.")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Error al eliminar: {e}")
+
+
