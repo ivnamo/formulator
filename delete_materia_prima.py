@@ -22,7 +22,7 @@ def eliminar_materia_prima():
             try:
                 supabase.table("materias_primas").delete().eq("id", int(fila["id"])).execute()
                 st.success("Materia prima eliminada correctamente.")
-                st.experimental_rerun()
+                st.rerun()
             except Exception as e:
                 st.error(f"❌ Error al eliminar: {e}")
         else:
