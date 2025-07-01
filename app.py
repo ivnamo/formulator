@@ -1,4 +1,5 @@
 
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -15,7 +16,8 @@ def main():
     st.title("Calculadora de Fórmulas - Composición + Coste")
 
     with st.sidebar:
-        st.image("logo.png", width=180)  # ✅ método compatible con Streamlit Cloud
+        # ✅ Logo sin fullscreen (como el ejemplo que compartiste)
+        st.markdown("<img src='logo.png' width='180'>", unsafe_allow_html=True)
 
         st.markdown("### Navegación")
         menu = st.radio("Navegación", ["FORMULATE", "CREATE", "UPDATE", "DELETE"], label_visibility="collapsed")
