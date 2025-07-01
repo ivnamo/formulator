@@ -48,24 +48,24 @@ def gestionar_materias_primas(menu):
         fila = materias_disponibles[materias_disponibles["Materia Prima"] == seleccion_id]
 
         if st.button("Eliminar"):
-            if not fila.empty:
-                nombre = fila.iloc[0]["Materia Prima"]
-                confirmar = st.radio(
-                    f"¿Estás seguro de que quieres eliminar '{nombre}'?",
-                    ["No", "Sí"],
-                    index=0,
-                    horizontal=True,
-                    key="confirmar_eliminacion_dialog"
-                )
-                if confirmar == "Sí":
-                    try:
-                        supabase.table("materias_primas").delete().eq("id", int(fila.iloc[0]["id"])).execute()
-                        st.success("Materia prima eliminada.")
-                        st.session_state["materias_df"] = cargar_materias()
-                    except Exception as e:
-                        st.error(f"❌ Error al eliminar: {e}")
-                else:
-                    st.info("Acción cancelada.")
+            st.session_state["confirmar_borrado"] = True
+
+        if st.session_state.get("confirmar_borrado", False):
+            with st.warning(f"¿Estás seguro de que quieres eliminar '{seleccion_id}'?", icon="⚠️"):
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("✅ Confirmar eliminación"):
+                        try:
+                            supabase.table("materias_primas").delete().eq("id", int(fila.iloc[0]["id"])).execute()
+                            st.success("Materia prima eliminada.")
+                            st.session_state["materias_df"] = cargar_materias()
+                        except Exception as e:
+                            st.error(f"❌ Error al eliminar: {e}")
+                        st.session_state["confirmar_borrado"] = False
+                with col2:
+                    if st.button("❌ Cancelar"):
+                        st.info("Eliminación cancelada.")
+                        st.session_state["confirmar_borrado"] = False
 
     st.markdown("---")
     st.subheader("✏️ Editar materias primas")
@@ -102,3 +102,4 @@ def gestionar_materias_primas(menu):
             st.session_state["materias_df"] = cargar_materias()
         except Exception as e:
             st.error(f"❌ Error al guardar: {e}")
+
