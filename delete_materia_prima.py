@@ -12,18 +12,27 @@ def eliminar_materia_prima():
         st.info("No hay materias primas para eliminar.")
         return
 
-    opciones = df["Materia Prima"].tolist()
-    seleccion = st.selectbox("Selecciona una materia prima para eliminar", opciones)
-    fila = df[df["Materia Prima"] == seleccion].iloc[0]
+    if "confirmacion" not in st.session_state:
+        st.session_state.confirmacion = False
+    if "seleccion_id" not in st.session_state:
+        st.session_state.seleccion_id = None
 
-    confirmar = st.checkbox("Confirmo que deseo eliminar esta materia prima")
-    if st.button("Eliminar"):
-        if confirmar:
-            try:
-                supabase.table("materias_primas").delete().eq("id", int(fila["id"])).execute()
-                st.success("Materia prima eliminada correctamente.")
-                st.rerun()
-            except Exception as e:
-                st.error(f"❌ Error al eliminar: {e}")
-        else:
-            st.warning("Debes confirmar antes de eliminar.")
+    opciones = [""] + df["Materia Prima"].tolist()
+    seleccion = st.selectbox("Selecciona una materia prima para eliminar", opciones, index=0, key="seleccion_combo")
+
+    if seleccion:
+        fila = df[df["Materia Prima"] == seleccion].iloc[0]
+        st.session_state.confirmacion = st.checkbox("Confirmo que deseo eliminar esta materia prima", key="confirmar_checkbox")
+
+        if st.button("Eliminar"):
+            if st.session_state.confirmacion:
+                try:
+                    supabase.table("materias_primas").delete().eq("id", int(fila["id"])).execute()
+                    st.success("Materia prima eliminada correctamente.")
+                    st.session_state.confirmacion = False
+                    st.session_state.seleccion_combo = 0
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Error al eliminar: {e}")
+            else:
+                st.warning("Debes confirmar antes de eliminar.")
