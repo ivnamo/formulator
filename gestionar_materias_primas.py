@@ -13,101 +13,61 @@ def gestionar_materias_primas(menu):
         response = supabase.table("materias_primas").select("*").execute()
         return pd.DataFrame(response.data)
 
-    # Cargar y mostrar datos iniciales
     df = cargar_materias()
-    st.session_state["materias_df"] = df
+    st.session_state["materias_df"] = df.copy()
 
     st.markdown("---")
-    st.subheader("➕ Añadir nueva materia prima")
-
-    with st.form("form_nueva_mp", clear_on_submit=True):
-        nueva_nombre = st.text_input("Nombre de la Materia Prima")
-        nuevo_precio = st.number_input("Precio €/kg", min_value=0.0, step=0.01)
-        submitted = st.form_submit_button("Agregar")
-
-        if submitted:
-            if not nueva_nombre:
-                st.warning("Debes introducir un nombre.")
-            else:
-                try:
-                    supabase.table("materias_primas").insert([{
-                        "Materia Prima": nueva_nombre.upper(),
-                        "Precio €/kg": nuevo_precio
-                    }]).execute()
-                    st.success("Materia prima añadida correctamente.")
-                    st.session_state["materias_df"] = cargar_materias()
-                except Exception as e:
-                    st.error(f"❌ Error al añadir: {e}")
-
-    st.markdown("---")
-    st.subheader("🗑️ Eliminar materia prima")
-    materias_disponibles = st.session_state["materias_df"][["id", "Materia Prima"]]
-
-    if not materias_disponibles.empty:
-        seleccion_id = st.selectbox("Selecciona una materia prima para eliminar", materias_disponibles["Materia Prima"], key="selector_eliminar")
-        fila = materias_disponibles[materias_disponibles["Materia Prima"] == seleccion_id]
-
-        if "confirmar_borrado" not in st.session_state:
-            st.session_state["confirmar_borrado"] = False
-            st.session_state["borrado_id"] = None
-
-        if st.button("Eliminar", key="boton_eliminar"):
-            st.session_state["confirmar_borrado"] = True
-            st.session_state["borrado_id"] = int(fila.iloc[0]["id"])
-
-        if st.session_state["confirmar_borrado"] and st.session_state["borrado_id"] == int(fila.iloc[0]["id"]):
-            with st.warning(f"⚠️ ¿Estás seguro de que deseas eliminar '{seleccion_id}'?"):
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("✅ Confirmar eliminación", key="confirmar_si"):
-                        try:
-                            supabase.table("materias_primas").delete().eq("id", st.session_state["borrado_id"]).execute()
-                            st.success("Materia prima eliminada.")
-                            st.session_state["materias_df"] = cargar_materias()
-                        except Exception as e:
-                            st.error(f"❌ Error al eliminar: {e}")
-                        st.session_state["confirmar_borrado"] = False
-                        st.session_state["borrado_id"] = None
-                with col2:
-                    if st.button("❌ Cancelar", key="cancelar"):
-                        st.info("Eliminación cancelada.")
-                        st.session_state["confirmar_borrado"] = False
-                        st.session_state["borrado_id"] = None
-
-    st.markdown("---")
-    st.subheader("✏️ Editar materias primas")
+    st.subheader("✏️ Editor de materias primas")
 
     edited_df = st.data_editor(
         st.session_state["materias_df"],
         use_container_width=True,
         num_rows="dynamic",
         key="editor_crud",
-        column_config={col: st.column_config.Column(disabled=(col == "id")) for col in st.session_state["materias_df"].columns}
+        column_config={col: st.column_config.Column(disabled=(col == "id")) for col in df.columns}
     )
 
-    if st.button("💾 Guardar cambios"):
-        st.session_state["materias_df"] = edited_df
+    col1, col2, col3 = st.columns([1, 1, 2])
 
-        if "Materia Prima" not in edited_df.columns:
-            st.error("❌ La columna obligatoria 'Materia Prima' no está presente en los datos.")
-            return
+    with col1:
+        if st.button("➕ Añadir fila vacía"):
+            nueva_fila = {col: None for col in df.columns}
+            nueva_fila["id"] = df["id"].max() + 1 if not df.empty else 1
+            st.session_state["materias_df"] = pd.concat([df, pd.DataFrame([nueva_fila])], ignore_index=True)
+            st.rerun()
 
-        if "id" not in edited_df.columns:
-            st.error("❌ No se encuentra la columna 'id', necesaria para el upsert.")
-            return
+    with col2:
+        if st.button("🗑️ Eliminar fila seleccionada"):
+            seleccion = edited_df.get("_selected_row", None)
+            if seleccion is None or isinstance(seleccion, pd.Series):
+                st.warning("Primero selecciona una fila para eliminar.")
+            else:
+                fila = edited_df.iloc[seleccion]
+                try:
+                    supabase.table("materias_primas").delete().eq("id", int(fila["id"])).execute()
+                    st.success("Fila eliminada correctamente.")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Error al eliminar: {e}")
 
-        cleaned_df = edited_df.copy()
-        cleaned_df = cleaned_df.replace({np.nan: None})
-        cleaned_data = cleaned_df.to_dict(orient="records")
+    with col3:
+        if st.button("💾 Guardar cambios"):
+            if "Materia Prima" not in edited_df.columns:
+                st.error("❌ La columna obligatoria 'Materia Prima' no está presente en los datos.")
+                return
+            if "id" not in edited_df.columns:
+                st.error("❌ No se encuentra la columna 'id', necesaria para el upsert.")
+                return
+            cleaned_df = edited_df.replace({np.nan: None})
+            try:
+                supabase.table("materias_primas").upsert(
+                    cleaned_df.to_dict(orient="records"),
+                    on_conflict=["id"]
+                ).execute()
+                st.success("Cambios guardados correctamente en Supabase.")
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ Error al guardar: {e}")
 
-        try:
-            supabase.table("materias_primas").upsert(
-                cleaned_data,
-                on_conflict=["id"]
-            ).execute()
-            st.success("Cambios guardados correctamente en Supabase.")
-            st.session_state["materias_df"] = cargar_materias()
-        except Exception as e:
-            st.error(f"❌ Error al guardar: {e}")
 
 
