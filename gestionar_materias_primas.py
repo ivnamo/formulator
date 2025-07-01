@@ -3,12 +3,7 @@ import pandas as pd
 import numpy as np
 from supabase_client import supabase
 
-def gestionar_materias_primas():
-    st.set_page_config(layout="wide")
-
-    menu = st.sidebar.radio("Navegación", ["Formulación", "CRUD Materias Primas"])
-    st.title("Calculadora de Fórmulas - Composición + Coste")
-
+def gestionar_materias_primas(menu):
     if menu != "CRUD Materias Primas":
         return
 
