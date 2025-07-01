@@ -13,7 +13,7 @@ def main():
     st.set_page_config(layout="wide")
     st.title("Calculadora de Fórmulas - Composición + Coste")
 
-    menu = st.sidebar.radio("Navegación", ["Formulación", "CREATE", "UPDATE", "DELETE"])
+    menu = st.sidebar.radio("Navegación", ["FORMULATE", "CREATE", "UPDATE", "DELETE"])
 
     if menu == "CREATE":
         crear_materia_prima()
