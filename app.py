@@ -1,5 +1,7 @@
 import streamlit as st
-from data_loader import cargar_datos
+import pandas as pd
+import numpy as np
+from supabase_client import supabase
 from editor import mostrar_editor_formula
 from resultados import mostrar_resultados
 from families import obtener_familias_parametros
@@ -11,11 +13,17 @@ def main():
 
     menu = st.sidebar.radio("Navegación", ["Formulación", "CRUD Materias Primas"])
 
-    archivo = st.file_uploader("Sube el archivo de materias primas (.xlsx)", type=["xlsx"])
-    df = cargar_datos(archivo)
-
     if menu == "CRUD Materias Primas":
-        gestionar_materias_primas()
+        gestionar_materias_primas(menu)
+        return
+
+    # Cargar datos directamente desde Supabase
+    response = supabase.table("materias_primas").select("*").execute()
+    df = pd.DataFrame(response.data)
+    df["%"] = 0.0
+
+    if "Materia Prima" not in df.columns:
+        st.error("La columna 'Materia Prima' no está disponible en los datos.")
         return
 
     seleccionadas = st.multiselect(
