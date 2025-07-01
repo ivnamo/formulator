@@ -17,6 +17,7 @@ def actualizar_materia_prima():
     gb = GridOptionsBuilder.from_dataframe(df)
     gb.configure_default_column(editable=True, filter=True, sortable=True)
     gb.configure_column("id", editable=False)
+    gb.configure_grid_options(domLayout='autoHeight')
     grid_options = gb.build()
 
     grid_response = AgGrid(
@@ -24,7 +25,7 @@ def actualizar_materia_prima():
         gridOptions=grid_options,
         update_mode=GridUpdateMode.VALUE_CHANGED,
         theme="streamlit",  # opcional: "light", "dark", "blue", etc.
-        fit_columns_on_grid_load=True,
+        fit_columns_on_grid_load=False,
         allow_unsafe_jscode=True
     )
 
