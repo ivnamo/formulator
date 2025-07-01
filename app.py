@@ -16,7 +16,7 @@ def main():
     st.title("Calculadora de Fórmulas - Composición + Coste")
 
     with st.sidebar:
-        logo_path = "/mnt/data/logo.png"
+        logo_path = "logo.png"
         if os.path.exists(logo_path):
             # Mostrar imagen como markdown para evitar fullscreen
             st.markdown(f"<img src='file://{logo_path}' width='180'>", unsafe_allow_html=True)
