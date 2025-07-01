@@ -17,7 +17,13 @@ def main():
 
     with st.sidebar:
         # ✅ Logo sin fullscreen (como el ejemplo que compartiste)
-        st.markdown("<img src='logo.png' width='180'>", unsafe_allow_html=True)
+        
+        st.markdown("""
+    <div style='display: flex; justify-content: center; align-items: center; padding: 10px 0;'>
+        <img src='logo.png' style='width: 120px; height: auto; object-fit: contain;'>
+    </div>
+""", unsafe_allow_html=True)
+
 
         st.markdown("### Navegación")
         menu = st.radio("Navegación", ["FORMULATE", "CREATE", "UPDATE", "DELETE"], label_visibility="collapsed")
