@@ -1,4 +1,5 @@
 
+
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 import streamlit as st
 import pandas as pd
@@ -15,15 +16,16 @@ def actualizar_materia_prima():
         st.info("No hay materias primas disponibles.")
         return
 
-    # Configurar columnas
+    # Configurar columnas con ancho fijo
     gb = GridOptionsBuilder.from_dataframe(df)
     gb.configure_default_column(
         editable=True,
         filter=True,
         sortable=True,
         floatingFilter=True,
+        width=120,       # ✅ fuerza ancho base
         minWidth=100,
-        maxWidth=150  # ✅ limite superior para evitar columnas desproporcionadas
+        maxWidth=130
     )
     gb.configure_column("id", editable=False)
     grid_options = gb.build()
