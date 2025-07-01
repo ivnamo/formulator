@@ -18,7 +18,12 @@ def actualizar_materia_prima():
         use_container_width=True,
         num_rows="dynamic",
         key="editor_actualizar",
-        column_config={col: st.column_config.Column(disabled=(col == "id")) for col in df.columns}
+        column_config={col: st.column_config.Column(disabled=(col == "id")) for col in df.columns},
+        column_order=list(df.columns),  # asegura orden lógico
+        hide_index=True,                # opcional para estética
+        disabled=False,                 # permite edición
+        filters=True,                   # ✅ habilita filtros
+        sort_by=True                    # ✅ habilita ordenamiento
     )
 
     if st.button("💾 Guardar cambios"):
