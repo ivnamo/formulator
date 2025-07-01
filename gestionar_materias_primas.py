@@ -4,6 +4,8 @@ import numpy as np
 from supabase_client import supabase
 
 def gestionar_materias_primas():
+    st.set_page_config(layout="wide")
+    st.title("Calculadora de Fórmulas - Composición + Coste")
     st.subheader("🧾 CRUD de Materias Primas")
 
     if "materias_df" not in st.session_state:
@@ -43,4 +45,5 @@ def gestionar_materias_primas():
             st.success("Cambios guardados correctamente en Supabase.")
         except Exception as e:
             st.error(f"❌ Error al guardar: {e}")
+
 
