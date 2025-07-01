@@ -19,7 +19,7 @@ def main():
         logo_path = "logo.png"
         if os.path.exists(logo_path):
             # Mostrar imagen como markdown para evitar fullscreen
-            st.markdown(f"<img src='file://{logo_path}' width='180'>", unsafe_allow_html=True)
+            st.markdown(f"<img src='{logo_path}' width='180'>", unsafe_allow_html=True)
         else:
             st.warning("⚠️ Logo no encontrado.")
 
