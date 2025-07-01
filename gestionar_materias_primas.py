@@ -5,7 +5,13 @@ from supabase_client import supabase
 
 def gestionar_materias_primas():
     st.set_page_config(layout="wide")
+
+    menu = st.sidebar.radio("Navegación", ["Formulación", "CRUD Materias Primas"])
     st.title("Calculadora de Fórmulas - Composición + Coste")
+
+    if menu != "CRUD Materias Primas":
+        return
+
     st.subheader("🧾 CRUD de Materias Primas")
 
     if "materias_df" not in st.session_state:
@@ -45,5 +51,4 @@ def gestionar_materias_primas():
             st.success("Cambios guardados correctamente en Supabase.")
         except Exception as e:
             st.error(f"❌ Error al guardar: {e}")
-
 
