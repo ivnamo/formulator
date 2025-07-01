@@ -20,7 +20,7 @@ def gestionar_materias_primas(menu):
     st.markdown("---")
     st.subheader("➕ Añadir nueva materia prima")
 
-    with st.form("form_nueva_mp"):
+    with st.form("form_nueva_mp", clear_on_submit=True):
         nueva_nombre = st.text_input("Nombre de la Materia Prima")
         nuevo_precio = st.number_input("Precio €/kg", min_value=0.0, step=0.01)
         submitted = st.form_submit_button("Agregar")
@@ -31,7 +31,7 @@ def gestionar_materias_primas(menu):
             else:
                 try:
                     supabase.table("materias_primas").insert([{
-                        "Materia Prima": nueva_nombre,
+                        "Materia Prima": nueva_nombre.upper(),
                         "Precio €/kg": nuevo_precio
                     }]).execute()
                     st.success("Materia prima añadida correctamente.")
@@ -49,12 +49,23 @@ def gestionar_materias_primas(menu):
 
         if st.button("Eliminar"):
             if not fila.empty:
-                try:
-                    supabase.table("materias_primas").delete().eq("id", int(fila.iloc[0]["id"])).execute()
-                    st.success("Materia prima eliminada.")
-                    st.session_state["materias_df"] = cargar_materias()
-                except Exception as e:
-                    st.error(f"❌ Error al eliminar: {e}")
+                nombre = fila.iloc[0]["Materia Prima"]
+                confirmar = st.radio(
+                    f"¿Estás seguro de que quieres eliminar '{nombre}'?",
+                    ["No", "Sí"],
+                    index=0,
+                    horizontal=True,
+                    key="confirmar_eliminacion_dialog"
+                )
+                if confirmar == "Sí":
+                    try:
+                        supabase.table("materias_primas").delete().eq("id", int(fila.iloc[0]["id"])).execute()
+                        st.success("Materia prima eliminada.")
+                        st.session_state["materias_df"] = cargar_materias()
+                    except Exception as e:
+                        st.error(f"❌ Error al eliminar: {e}")
+                else:
+                    st.info("Acción cancelada.")
 
     st.markdown("---")
     st.subheader("✏️ Editar materias primas")
@@ -91,4 +102,3 @@ def gestionar_materias_primas(menu):
             st.session_state["materias_df"] = cargar_materias()
         except Exception as e:
             st.error(f"❌ Error al guardar: {e}")
-
