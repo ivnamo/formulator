@@ -14,18 +14,36 @@ def actualizar_materia_prima():
         st.info("No hay materias primas disponibles.")
         return
 
+    # Configurar columnas
     gb = GridOptionsBuilder.from_dataframe(df)
-    gb.configure_default_column(editable=True, filter=True, sortable=True)
+    gb.configure_default_column(
+        editable=True,
+        filter=True,
+        sortable=True,
+        floatingFilter=True,
+        minWidth=120  # mejora legibilidad
+    )
     gb.configure_column("id", editable=False)
-    gb.configure_grid_options(domLayout='autoHeight')
     grid_options = gb.build()
 
+    # Forzar scroll con estilo CSS
+    st.markdown("""
+        <style>
+        .ag-theme-streamlit {
+            overflow: auto !important;
+            max-height: 600px !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Mostrar la tabla con scroll
     grid_response = AgGrid(
         df,
         gridOptions=grid_options,
         update_mode=GridUpdateMode.VALUE_CHANGED,
-        theme="streamlit",  # opcional: "light", "dark", "blue", etc.
+        theme="streamlit",
         fit_columns_on_grid_load=False,
+        height=600,  # activa scroll vertical
         allow_unsafe_jscode=True
     )
 
