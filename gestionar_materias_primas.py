@@ -25,16 +25,15 @@ def gestionar_materias_primas():
             st.error("❌ La columna obligatoria 'Materia Prima' no está presente en los datos.")
             return
 
-        # Limpieza: reemplazar NaN por None y asegurar strings en columnas
+        # Limpieza y preparación
         cleaned_df = edited_df.copy()
-        if "id" in cleaned_df.columns:
-            cleaned_df = cleaned_df.drop(columns=["id"])  # evitar colisión con claves primarias
         cleaned_df = cleaned_df.where(pd.notnull(cleaned_df), None)
-        cleaned_data = cleaned_df.to_dict(orient="records")
 
         try:
-            supabase.table("materias_primas").delete().neq("id", 0).execute()
-            supabase.table("materias_primas").insert(cleaned_data).execute()
+            supabase.table("materias_primas").upsert(
+                cleaned_df.to_dict(orient="records"),
+                on_conflict=["id"]
+            ).execute()
             st.success("Cambios guardados correctamente en Supabase.")
         except Exception as e:
             st.error(f"❌ Error al guardar: {e}")
