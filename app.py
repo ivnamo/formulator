@@ -16,14 +16,12 @@ def main():
     st.title("Calculadora de Fórmulas - Composición + Coste")
 
     with st.sidebar:
-        # ✅ Logo sin fullscreen (como el ejemplo que compartiste)
-        
+        # ✅ Logo centrado, con tamaño responsivo, sin fullscreen
         st.markdown("""
-    <div style='display: flex; justify-content: center; align-items: center; padding: 10px 0;'>
-        <img src='logo.png' style='width: 120px; height: auto; object-fit: contain;'>
-    </div>
-""", unsafe_allow_html=True)
-
+        <div style='display: flex; justify-content: center; align-items: center; padding: 10px 0;'>
+            <img src='logo.png' style='width: 120px; height: auto; object-fit: contain;'>
+        </div>
+        """, unsafe_allow_html=True)
 
         st.markdown("### Navegación")
         menu = st.radio("Navegación", ["FORMULATE", "CREATE", "UPDATE", "DELETE"], label_visibility="collapsed")
@@ -89,3 +87,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
