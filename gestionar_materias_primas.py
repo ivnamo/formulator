@@ -51,7 +51,9 @@ def gestionar_materias_primas(menu):
             st.session_state["confirmar_borrado"] = True
 
         if st.session_state.get("confirmar_borrado", False):
-            with st.warning(f"¿Estás seguro de que quieres eliminar '{seleccion_id}'?", icon="⚠️"):
+            with st.container():
+                st.markdown("### ⚠️ Confirmación de eliminación")
+                st.markdown(f"¿Estás seguro de que deseas eliminar **'{seleccion_id}'**?")
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button("✅ Confirmar eliminación"):
@@ -61,11 +63,11 @@ def gestionar_materias_primas(menu):
                             st.session_state["materias_df"] = cargar_materias()
                         except Exception as e:
                             st.error(f"❌ Error al eliminar: {e}")
-                        st.session_state["confirmar_borrado"] = False
+                        st.session_state.pop("confirmar_borrado", None)
                 with col2:
                     if st.button("❌ Cancelar"):
                         st.info("Eliminación cancelada.")
-                        st.session_state["confirmar_borrado"] = False
+                        st.session_state.pop("confirmar_borrado", None)
 
     st.markdown("---")
     st.subheader("✏️ Editar materias primas")
@@ -102,4 +104,3 @@ def gestionar_materias_primas(menu):
             st.session_state["materias_df"] = cargar_materias()
         except Exception as e:
             st.error(f"❌ Error al guardar: {e}")
-
