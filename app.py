@@ -19,7 +19,7 @@ def main():
         # ✅ Logo centrado, con tamaño responsivo, sin fullscreen
         st.markdown("""
         <div style='display: flex; justify-content: center; align-items: center; padding: 10px 0;'>
-            <img src='https://raw.githubusercontent.com/ivnamo/formulator/main/logo.png' style='width: 120px; height: auto; object-fit: contain;'>
+            <img src='https://raw.githubusercontent.com/ivnamo/formulator/main/logo.png' style='width: 200px; height: auto; object-fit: contain;'>
         </div>
         """, unsafe_allow_html=True)
 
