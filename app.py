@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -8,13 +9,20 @@ from families import obtener_familias_parametros
 from create_materia_prima import crear_materia_prima
 from update_materia_prima import actualizar_materia_prima
 from delete_materia_prima import eliminar_materia_prima
+import os
 
 def main():
     st.set_page_config(layout="wide")
     st.title("Calculadora de Fórmulas - Composición + Coste")
 
     with st.sidebar:
-        st.image("logo.png", width=180)  # Logo personalizado
+        logo_path = "/mnt/data/logo.png"
+        if os.path.exists(logo_path):
+            # Mostrar imagen como markdown para evitar fullscreen
+            st.markdown(f"<img src='file://{logo_path}' width='180'>", unsafe_allow_html=True)
+        else:
+            st.warning("⚠️ Logo no encontrado.")
+
         st.markdown("### Navegación")
         menu = st.radio("", ["FORMULATE", "CREATE", "UPDATE", "DELETE"])
 
