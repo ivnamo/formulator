@@ -1,3 +1,4 @@
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -13,24 +14,23 @@ def actualizar_materia_prima():
         st.info("No hay materias primas disponibles.")
         return
 
-    edited_df = st.data_editor(
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_default_column(editable=True, filter=True, sortable=True)
+    gb.configure_column("id", editable=False)
+    grid_options = gb.build()
+
+    grid_response = AgGrid(
         df,
-        use_container_width=True,
-        num_rows="dynamic",
-        key="editor_actualizar",
-        column_config={col: st.column_config.Column(disabled=(col == "id")) for col in df.columns},
-        column_order=list(df.columns),  # asegura orden lógico
-        hide_index=True,                # opcional para estética
-        disabled=False,                 # permite edición
-        filters=True,                   # ✅ habilita filtros
-        sort_by=True                    # ✅ habilita ordenamiento
+        gridOptions=grid_options,
+        update_mode=GridUpdateMode.VALUE_CHANGED,
+        theme="streamlit",  # opcional: "light", "dark", "blue", etc.
+        fit_columns_on_grid_load=True,
+        allow_unsafe_jscode=True
     )
 
-    if st.button("💾 Guardar cambios"):
-        if "Materia Prima" not in edited_df.columns or "id" not in edited_df.columns:
-            st.error("Faltan columnas obligatorias en los datos.")
-            return
+    edited_df = grid_response["data"]
 
+    if st.button("💾 Guardar cambios"):
         cleaned_df = edited_df.replace({np.nan: None})
         try:
             supabase.table("materias_primas").upsert(
@@ -40,3 +40,4 @@ def actualizar_materia_prima():
             st.success("Cambios guardados correctamente.")
         except Exception as e:
             st.error(f"❌ Error al guardar: {e}")
+
