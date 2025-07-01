@@ -1,3 +1,4 @@
+
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 import streamlit as st
 import pandas as pd
@@ -21,17 +22,19 @@ def actualizar_materia_prima():
         filter=True,
         sortable=True,
         floatingFilter=True,
-        minWidth=120  # mejora legibilidad
+        minWidth=100,
+        maxWidth=150  # ✅ limite superior para evitar columnas desproporcionadas
     )
     gb.configure_column("id", editable=False)
     grid_options = gb.build()
 
-    # Forzar scroll con estilo CSS
+    # CSS para asegurar scroll y estilo
     st.markdown("""
         <style>
         .ag-theme-streamlit {
             overflow: auto !important;
             max-height: 600px !important;
+            font-family: monospace;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -43,7 +46,7 @@ def actualizar_materia_prima():
         update_mode=GridUpdateMode.VALUE_CHANGED,
         theme="streamlit",
         fit_columns_on_grid_load=False,
-        height=600,  # activa scroll vertical
+        height=600,
         allow_unsafe_jscode=True
     )
 
@@ -59,4 +62,5 @@ def actualizar_materia_prima():
             st.success("Cambios guardados correctamente.")
         except Exception as e:
             st.error(f"❌ Error al guardar: {e}")
+
 
