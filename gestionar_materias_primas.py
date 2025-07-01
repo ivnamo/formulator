@@ -9,10 +9,13 @@ def gestionar_materias_primas(menu):
 
     st.subheader("🧾 CRUD de Materias Primas")
 
-    if "materias_df" not in st.session_state:
+    def cargar_materias():
         response = supabase.table("materias_primas").select("*").execute()
-        df = pd.DataFrame(response.data)
-        st.session_state["materias_df"] = df
+        return pd.DataFrame(response.data)
+
+    # Carga actualizada de datos
+    df = cargar_materias()
+    st.session_state["materias_df"] = df
 
     edited_df = st.data_editor(
         st.session_state["materias_df"],
@@ -24,7 +27,6 @@ def gestionar_materias_primas(menu):
     if st.button("💾 Guardar cambios"):
         st.session_state["materias_df"] = edited_df
 
-        # Validar columna obligatoria "Materia Prima"
         if "Materia Prima" not in edited_df.columns:
             st.error("❌ La columna obligatoria 'Materia Prima' no está presente en los datos.")
             return
@@ -33,7 +35,6 @@ def gestionar_materias_primas(menu):
             st.error("❌ No se encuentra la columna 'id', necesaria para el upsert.")
             return
 
-        # Limpieza segura para JSON
         cleaned_df = edited_df.copy()
         cleaned_df = cleaned_df.replace({np.nan: None})
         cleaned_data = cleaned_df.to_dict(orient="records")
@@ -44,6 +45,7 @@ def gestionar_materias_primas(menu):
                 on_conflict=["id"]
             ).execute()
             st.success("Cambios guardados correctamente en Supabase.")
+            st.session_state["materias_df"] = cargar_materias()
         except Exception as e:
             st.error(f"❌ Error al guardar: {e}")
 
@@ -65,7 +67,7 @@ def gestionar_materias_primas(menu):
                         "Precio €/kg": nuevo_precio
                     }]).execute()
                     st.success("Materia prima añadida correctamente.")
-                    st.rerun()
+                    st.session_state["materias_df"] = cargar_materias()
                 except Exception as e:
                     st.error(f"❌ Error al añadir: {e}")
 
@@ -82,8 +84,6 @@ def gestionar_materias_primas(menu):
                 try:
                     supabase.table("materias_primas").delete().eq("id", int(fila.iloc[0]["id"])).execute()
                     st.success("Materia prima eliminada.")
-                    st.rerun()
+                    st.session_state["materias_df"] = cargar_materias()
                 except Exception as e:
                     st.error(f"❌ Error al eliminar: {e}")
-
-
