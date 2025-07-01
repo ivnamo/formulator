@@ -5,19 +5,27 @@ from supabase_client import supabase
 from editor import mostrar_editor_formula
 from resultados import mostrar_resultados
 from families import obtener_familias_parametros
-from gestionar_materias_primas import gestionar_materias_primas
+from create_materia_prima import crear_materia_prima
+from update_materia_prima import actualizar_materia_prima
+from delete_materia_prima import eliminar_materia_prima
 
 def main():
     st.set_page_config(layout="wide")
     st.title("Calculadora de Fórmulas - Composición + Coste")
 
-    menu = st.sidebar.radio("Navegación", ["Formulación", "CRUD Materias Primas"])
+    menu = st.sidebar.radio("Navegación", ["Formulación", "CREATE", "UPDATE", "DELETE"])
 
-    if menu == "CRUD Materias Primas":
-        gestionar_materias_primas(menu)
+    if menu == "CREATE":
+        crear_materia_prima()
+        return
+    elif menu == "UPDATE":
+        actualizar_materia_prima()
+        return
+    elif menu == "DELETE":
+        eliminar_materia_prima()
         return
 
-    # Cargar datos directamente desde Supabase
+    # Formulación
     response = supabase.table("materias_primas").select("*").execute()
     df = pd.DataFrame(response.data)
     df["%"] = 0.0
