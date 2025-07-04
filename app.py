@@ -29,7 +29,7 @@ def main():
         """, unsafe_allow_html=True)
 
         st.markdown("### Navegación")
-        menu = st.radio("Navegación", ["FORMULATE", "Materias Primas"], label_visibility="collapsed")
+        menu = st.radio("Navegación", ["Formular", "Materias Primas"], label_visibility="collapsed")
 
         st.markdown("---")
         st.markdown("""
