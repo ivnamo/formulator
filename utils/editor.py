@@ -45,17 +45,14 @@ def mostrar_editor_formula(df, seleccionadas):
         key="formula_editor"
     )
 
-    # Actualizar orden_personalizado si el usuario lo ha editado
-    for _, row in df_editado.iterrows():
-        mp = row["Materia Prima"]
-        orden_editado = int(row["Orden"])
-        orden_actual[mp] = orden_editado
-
-    # Reordenar internamente por si el usuario cambió el orden
-    st.session_state.orden_personalizado = {
-        k: v for k, v in sorted(orden_actual.items(), key=lambda item: item[1])
-    }
+    # Guardar orden manual actualizado desde df_editado
+    if "Orden" in df_editado.columns and "Materia Prima" in df_editado.columns:
+        nuevo_orden = df_editado[["Materia Prima", "Orden"]].drop_duplicates()
+        st.session_state.orden_personalizado = {
+            row["Materia Prima"]: int(row["Orden"]) for _, row in nuevo_orden.iterrows()
+        }
 
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
     return df_editado, total_pct
+
