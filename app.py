@@ -5,8 +5,6 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
-
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -31,7 +29,7 @@ def main():
         """, unsafe_allow_html=True)
 
         st.markdown("### Navegación")
-        menu = st.radio("Navegación", ["FORMULATE", "CREATE", "UPDATE", "DELETE"], label_visibility="collapsed")
+        menu = st.radio("Navegación", ["FORMULATE", "Materias Primas"], label_visibility="collapsed")
 
         st.markdown("---")
         st.markdown("""
@@ -40,17 +38,18 @@ def main():
         **Fecha:** 01/07/2005
         """)
 
-    if menu == "CREATE":
-        crear_materia_prima()
-        return
-    elif menu == "UPDATE":
-        actualizar_materia_prima()
-        return
-    elif menu == "DELETE":
-        eliminar_materia_prima()
+    if menu == "Materias Primas":
+        subtarea = st.selectbox("Acción sobre materias primas", ["Crear", "Actualizar", "Eliminar"])
+
+        if subtarea == "Crear":
+            crear_materia_prima()
+        elif subtarea == "Actualizar":
+            actualizar_materia_prima()
+        elif subtarea == "Eliminar":
+            eliminar_materia_prima()
         return
 
-    # Formulación
+    # FORMULATE
     response = supabase.table("materias_primas").select("*").execute()
     df = pd.DataFrame(response.data)
     df["%"] = 0.0
