@@ -32,8 +32,16 @@ def mostrar_editor_formula(df, seleccionadas):
 
     df_filtrado["Orden"] = df_filtrado["Materia Prima"].map(orden_actual)
 
-    # Recuperar valores previos fila a fila, solo si no está ya editando
-    if st.session_state.formula_editada.empty is False and st.session_state.get("editando_formula") is not True:
+    # Detectar si hay nuevas materias primas respecto al dataframe guardado
+    nuevas = (
+        [mp for mp in seleccionadas if mp not in st.session_state.formula_editada["Materia Prima"].values]
+        if not st.session_state.formula_editada.empty else seleccionadas
+    )
+
+    # Recuperar valores previos fila a fila si no está editando, o si hay nuevas materias primas
+    if not st.session_state.formula_editada.empty and (
+        not st.session_state.get("editando_formula") or nuevas
+    ):
         df_guardado = st.session_state.formula_editada
         columnas_a_copiar = [
             col for col in df_guardado.columns
