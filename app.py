@@ -90,7 +90,14 @@ def main():
             columnas_filtradas = columnas
 
         if abs(total_pct - 100) > 0.01:
-            st.warning("La suma de los porcentajes debe ser 100% para calcular.")
+            st.warning("⚠️ La suma de los porcentajes debe ser 100% para calcular.")
+            forzar = st.checkbox(
+                "🧪 Calcular de todos modos (forzar cálculo)",
+                help="Activa esta opción si deseas calcular aunque la fórmula no sume exactamente 100%."
+            )
+            if forzar:
+                st.info("Cálculo realizado con fórmula incompleta. Revisa los resultados con precaución.")
+                mostrar_resultados(df_editado, columnas_filtradas)
         else:
             mostrar_resultados(df_editado, columnas_filtradas)
 
