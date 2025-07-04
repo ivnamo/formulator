@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------
 
 import streamlit as st
-from utils.familias import obtener_familias_parametros
+from utils.families import obtener_familias_parametros
 
 def mostrar_editor_formula(df, seleccionadas):
     if "orden_personalizado" not in st.session_state:
