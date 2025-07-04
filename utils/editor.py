@@ -7,12 +7,12 @@
 
 import streamlit as st
 import pandas as pd
-from utils.families import obtener_familias_parametros
+from utils.familias import obtener_familias_parametros
 
 def mostrar_editor_formula(df, seleccionadas):
     if "orden_personalizado" not in st.session_state:
         st.session_state.orden_personalizado = {}
-    if "formula_editada" not in st.session_state:
+    if "formula_editada" not in st.session_state or not isinstance(st.session_state.formula_editada, pd.DataFrame):
         st.session_state.formula_editada = pd.DataFrame()
 
     # Detectar si ha cambiado la selección de materias primas
@@ -22,9 +22,9 @@ def mostrar_editor_formula(df, seleccionadas):
     # Guardar el editor antes de que se actualice la selección
     if cambio_en_seleccion and "formula_editor" in st.session_state:
         try:
-            st.session_state.formula_editada = st.session_state["formula_editor"].copy()
+            st.session_state.formula_editada = pd.DataFrame(st.session_state["formula_editor"]).copy()
         except Exception:
-            pass  # En caso de que no esté listo aún
+            pass
 
     st.session_state["seleccionadas_previas"] = seleccionadas.copy()
 
@@ -52,11 +52,12 @@ def mostrar_editor_formula(df, seleccionadas):
     # Detectar si hay nuevas materias primas respecto al dataframe guardado
     nuevas = (
         [mp for mp in seleccionadas if mp not in st.session_state.formula_editada["Materia Prima"].values]
-        if not st.session_state.formula_editada.empty else seleccionadas
+        if isinstance(st.session_state.formula_editada, pd.DataFrame) and not st.session_state.formula_editada.empty
+        else seleccionadas
     )
 
     # Recuperar valores previos fila a fila si no está editando, o si hay nuevas materias primas
-    if not st.session_state.formula_editada.empty and (
+    if isinstance(st.session_state.formula_editada, pd.DataFrame) and not st.session_state.formula_editada.empty and (
         not st.session_state.get("editando_formula") or nuevas
     ):
         df_guardado = st.session_state.formula_editada
@@ -110,5 +111,4 @@ def mostrar_editor_formula(df, seleccionadas):
         st.session_state.editando_formula = True
 
     return df_editado, total_pct
-
 
