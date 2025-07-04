@@ -16,6 +16,8 @@ from utils.orden_editor import mostrar_editor_orden
 from crud_mp.create_materia_prima import crear_materia_prima
 from crud_mp.update_materia_prima import actualizar_materia_prima
 from crud_mp.delete_materia_prima import eliminar_materia_prima
+from utils.guardar_formula import guardar_formula
+from utils.generar_qr import generar_qr
 
 def main():
     st.set_page_config(layout="wide")
@@ -98,7 +100,23 @@ def main():
         else:
             mostrar_resultados(df_editado, columnas_filtradas)
 
-        # Mostrar editor de orden DESPUÉS de resultados
+            # Guardar y generar QR
+            st.markdown("---")
+            st.subheader("📂 Guardar fórmula")
+
+            nombre_formula = st.text_input("Nombre de la fórmula", placeholder="Ej. Bioestimulante Algas v1")
+            if st.button("Guardar fórmula"):
+                if not nombre_formula.strip():
+                    st.warning("Debes ingresar un nombre para guardar la fórmula.")
+                else:
+                    formula_id = guardar_formula(df_editado, nombre_formula.strip(), precio)
+                    url_formula = f"https://tu-app.streamlit.app/?formula_id={formula_id}"
+                    qr_img = generar_qr(url_formula)
+
+                    st.success("✅ Fórmula guardada correctamente.")
+                    st.image(qr_img, caption="Código QR para esta fórmula", use_column_width=False)
+                    st.code(url_formula, language="markdown")
+
         mostrar_editor_orden(df_editado)
 
 if __name__ == "__main__":
