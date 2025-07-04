@@ -15,11 +15,10 @@ def mostrar_editor_formula(df, seleccionadas):
     if "formula_editada" not in st.session_state or not isinstance(st.session_state.formula_editada, pd.DataFrame):
         st.session_state.formula_editada = pd.DataFrame()
 
-    # Detectar si ha cambiado la selección de materias primas
+    # Detectar si ha cambiado la selección
     seleccionadas_previas = st.session_state.get("seleccionadas_previas", [])
     cambio_en_seleccion = seleccionadas != seleccionadas_previas
 
-    # Guardar el editor antes de que se actualice la selección
     if cambio_en_seleccion and "formula_editor" in st.session_state:
         try:
             st.session_state.formula_editada = pd.DataFrame(st.session_state["formula_editor"]).copy()
@@ -28,19 +27,16 @@ def mostrar_editor_formula(df, seleccionadas):
 
     st.session_state["seleccionadas_previas"] = seleccionadas.copy()
 
-    # Si ha cambiado la selección, marcamos que ya no está editando
     if cambio_en_seleccion:
         st.session_state.editando_formula = False
 
     orden_actual = st.session_state.orden_personalizado
     df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
 
-    # Si no hay materias primas seleccionadas, limpiar valores guardados
     if not seleccionadas:
         st.session_state.formula_editada = pd.DataFrame()
         return pd.DataFrame(), 0.0
 
-    # Detectar nuevas materias primas y asignarles orden nuevo
     max_orden = max(orden_actual.values(), default=0)
     for mp in seleccionadas:
         if mp not in orden_actual:
@@ -49,14 +45,12 @@ def mostrar_editor_formula(df, seleccionadas):
 
     df_filtrado["Orden"] = df_filtrado["Materia Prima"].map(orden_actual)
 
-    # Detectar si hay nuevas materias primas respecto al dataframe guardado
     nuevas = (
         [mp for mp in seleccionadas if mp not in st.session_state.formula_editada["Materia Prima"].values]
         if isinstance(st.session_state.formula_editada, pd.DataFrame) and not st.session_state.formula_editada.empty
         else seleccionadas
     )
 
-    # Recuperar valores previos fila a fila si no está editando, o si hay nuevas materias primas
     if isinstance(st.session_state.formula_editada, pd.DataFrame) and not st.session_state.formula_editada.empty and (
         not st.session_state.get("editando_formula") or nuevas
     ):
@@ -79,7 +73,6 @@ def mostrar_editor_formula(df, seleccionadas):
 
     df_filtrado = df_filtrado.sort_values("Orden").reset_index(drop=True)
 
-    # Mostrar editor
     df_editado = st.data_editor(
         df_filtrado[columnas_mostrar],
         use_container_width=True,
@@ -90,22 +83,24 @@ def mostrar_editor_formula(df, seleccionadas):
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
-    # 🔁 Guardado automático robusto y no destructivo
-    df_guardado = st.session_state.formula_editada.copy()
-    if not df_guardado.empty:
+    # 🔁 Guardado robusto: fusionar edición actual con historial
+    prev = st.session_state.formula_editada
+    if prev.empty:
+        st.session_state.formula_editada = df_editado.copy()
+    else:
         columnas_actualizables = [
             col for col in df_editado.columns if col not in ["Orden", "Materia Prima"]
         ]
-        df_guardado.set_index("Materia Prima", inplace=True)
-        df_editado.set_index("Materia Prima", inplace=True)
-        df_guardado.update(df_editado[columnas_actualizables])
-        df_resultado = df_guardado.combine_first(df_editado).reset_index()
-    else:
-        df_resultado = df_editado.reset_index(drop=True)
+        df_editado_indexed = df_editado.set_index("Materia Prima")
+        prev_indexed = prev.set_index("Materia Prima")
+        prev_indexed.update(df_editado_indexed[columnas_actualizables])
+        df_fusionado = pd.concat([
+            prev_indexed,
+            df_editado_indexed[~df_editado_indexed.index.isin(prev_indexed.index)]
+        ])
+        st.session_state.formula_editada = df_fusionado.reset_index()
 
-    st.session_state.formula_editada = df_resultado.copy()
-
-    # Ejecutar lógica solo si se pulsa el botón
+    # Orden manual
     aplicar_orden = st.button("✅ Aplicar nuevo orden manual")
     if aplicar_orden:
         if "Orden" in df_editado.columns and "Materia Prima" in df_editado.columns:
@@ -125,4 +120,5 @@ def mostrar_editor_formula(df, seleccionadas):
         st.session_state.editando_formula = True
 
     return df_editado, total_pct
+
 
