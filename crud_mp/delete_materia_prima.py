@@ -8,7 +8,7 @@
 
 import streamlit as st
 import pandas as pd
-from supabase_client import supabase
+from utils.supabase_client import supabase
 
 def eliminar_materia_prima():
     st.subheader("🗑️ Eliminar materia prima")
