@@ -1,10 +1,3 @@
-# ------------------------------------------------------------------------------
-# FORMULATOR – Uso exclusivo de Iván Navarro
-# Todos los derechos reservados © 2025
-# Este archivo forma parte de un software no libre y no está autorizado su uso
-# ni distribución sin consentimiento expreso y por escrito del autor.
-# ------------------------------------------------------------------------------
-
 # utils/orden_editor.py
 
 import streamlit as st
@@ -12,24 +5,23 @@ import pandas as pd
 
 def mostrar_editor_orden(df_editado):
     """
-    Muestra una tabla independiente para ordenar las materias primas por número.
+    Muestra una única tabla editable para ordenar materias primas.
 
     Args:
-        df_editado (pd.DataFrame): El dataframe principal (con todas las columnas).
+        df_editado (pd.DataFrame): El DataFrame base con 'Materia Prima' y '%'.
 
     Returns:
-        None. Solo muestra la tabla ordenada visualmente.
+        pd.DataFrame: DataFrame visualmente reordenado (para mostrar al usuario).
     """
     st.markdown("### 📋 Orden de materias primas")
 
-    # Crear tabla auxiliar con solo columnas necesarias
+    # Crear tabla de orden visual
     orden_df = pd.DataFrame({
         "Orden": list(range(1, len(df_editado) + 1)),
         "Materia Prima": df_editado["Materia Prima"].values,
         "%": df_editado["%"].values
     })
 
-    # Mostrar editor con solo Orden editable
     orden_editado = st.data_editor(
         orden_df,
         column_config={
@@ -38,12 +30,14 @@ def mostrar_editor_orden(df_editado):
         },
         use_container_width=True,
         key="orden_editor",
-        hide_index=True  # 👈 Esto quita la columna de índice gris
+        hide_index=True
     )
 
-    # Botón para aplicar y mostrar resultado ordenado
-    if st.button("🔄 Reordenar materias primas según orden"):
-        ordenado = orden_editado.sort_values("Orden").reset_index(drop=True)
-        st.markdown("#### 🧾 Materias primas reordenadas")
-        st.dataframe(ordenado, use_container_width=True, hide_index=True)
+    # Botón para reordenar en sitio
+    if st.button("🔄 Reordenar según número de orden"):
+        orden_editado = orden_editado.sort_values("Orden").reset_index(drop=True)
+
+    # Mostramos la tabla ordenada (ya se muestra directamente al editar)
+    return None  # ya se muestra, no se necesita devolver nada
+
 
