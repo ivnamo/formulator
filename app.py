@@ -18,6 +18,7 @@ from crud_mp.update_materia_prima import actualizar_materia_prima
 from crud_mp.delete_materia_prima import eliminar_materia_prima
 from utils.guardar_formula import guardar_formula
 from utils.generar_qr import generar_qr
+from utils.formula_resultados import calcular_resultado_formula
 
 def main():
     st.set_page_config(layout="wide")
@@ -109,6 +110,7 @@ def main():
                 if not nombre_formula.strip():
                     st.warning("Debes ingresar un nombre para guardar la fórmula.")
                 else:
+                    precio, _ = calcular_resultado_formula(df_editado, columnas_filtradas)
                     formula_id = guardar_formula(df_editado, nombre_formula.strip(), precio)
                     url_formula = f"https://tu-app.streamlit.app/?formula_id={formula_id}"
                     qr_img = generar_qr(url_formula)
