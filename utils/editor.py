@@ -7,13 +7,18 @@
 
 import streamlit as st
 import pandas as pd
-from utils.families import obtener_familias_parametros
+from utils.familias import obtener_familias_parametros
 
 def mostrar_editor_formula(df, seleccionadas):
     if "orden_personalizado" not in st.session_state:
         st.session_state.orden_personalizado = {}
     if "formula_editada" not in st.session_state:
         st.session_state.formula_editada = pd.DataFrame()
+
+    # Detectar si ha cambiado la selección de materias primas
+    seleccionadas_previas = st.session_state.get("seleccionadas_previas", [])
+    cambio_en_seleccion = seleccionadas != seleccionadas_previas
+    st.session_state["seleccionadas_previas"] = seleccionadas.copy()
 
     orden_actual = st.session_state.orden_personalizado
     df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
@@ -72,8 +77,9 @@ def mostrar_editor_formula(df, seleccionadas):
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
-    # Guardar si el usuario pulsa botón
-    if st.button("✅ Aplicar nuevo orden manual"):
+    # Ejecutar lógica si pulsas el botón o si se detecta cambio en la selección
+    aplicar_orden = st.button("✅ Aplicar nuevo orden manual") or cambio_en_seleccion
+    if aplicar_orden:
         if "Orden" in df_editado.columns and "Materia Prima" in df_editado.columns:
             nuevo_orden_df = df_editado[["Materia Prima", "Orden"]].drop_duplicates()
             nuevo_orden_df = nuevo_orden_df.dropna(subset=["Orden"]).copy()
@@ -89,7 +95,6 @@ def mostrar_editor_formula(df, seleccionadas):
             st.session_state.editando_formula = False
             st.rerun()
     else:
-        # Si no se pulsa el botón, asumimos que está editando y no sobrescribimos nada
         st.session_state.editando_formula = True
 
     return df_editado, total_pct
