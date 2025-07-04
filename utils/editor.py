@@ -16,8 +16,10 @@ def mostrar_editor_formula(df, seleccionadas):
     # Asegurar columna 'Orden'
     if "Orden" not in df.columns:
         df["Orden"] = 0  # Inicializar en el df original para evitar que se pierda al filtrar
-    if "Orden" not in df_filtrado.columns or (df_filtrado["Orden"] == 0).all():
-        df_filtrado["Orden"] = list(range(1, len(df_filtrado) + 1))
+
+    # Asignar orden según el orden en que se seleccionaron
+    orden_dict = {nombre: i + 1 for i, nombre in enumerate(seleccionadas)}
+    df_filtrado["Orden"] = df_filtrado["Materia Prima"].map(orden_dict).fillna(0).astype(int)
 
     # Obtener columnas técnicas por familia
     columnas_default = obtener_familias_parametros()
@@ -41,4 +43,3 @@ def mostrar_editor_formula(df, seleccionadas):
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
     return df_editado, total_pct
-
