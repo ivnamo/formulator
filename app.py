@@ -112,7 +112,7 @@ def main():
                 else:
                     precio, _ = calcular_resultado_formula(df_editado, columnas_filtradas)
                     formula_id = guardar_formula(df_editado, nombre_formula.strip(), precio)
-                    url_formula = f"https://tu-app.streamlit.app/?formula_id={formula_id}"
+                    url_formula = f"https://formulator-pruebas.streamlit.app/?formula_id={formula_id}"
                     qr_img = generar_qr(url_formula)
 
                     st.success("✅ Fórmula guardada correctamente.")
