@@ -7,7 +7,7 @@
 
 
 import streamlit as st
-from formula_resultados import calcular_resultado_formula
+from utils.formula_resultados import calcular_resultado_formula
 
 def mostrar_resultados(df_editado, columnas_composicion):
     st.subheader("📊 Resultados")
