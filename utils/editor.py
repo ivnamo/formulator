@@ -7,7 +7,7 @@
 
 import streamlit as st
 import pandas as pd
-from utils.families import obtener_familias_parametros
+from utils.familias import obtener_familias_parametros
 
 def mostrar_editor_formula(df, seleccionadas):
     if "orden_personalizado" not in st.session_state:
@@ -90,8 +90,20 @@ def mostrar_editor_formula(df, seleccionadas):
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
-    # Guardar automáticamente los datos editados en cada ejecución
-    st.session_state.formula_editada = df_editado.copy()
+    # 🔁 Guardado automático robusto y no destructivo
+    df_guardado = st.session_state.formula_editada.copy()
+    if not df_guardado.empty:
+        columnas_actualizables = [
+            col for col in df_editado.columns if col not in ["Orden", "Materia Prima"]
+        ]
+        df_guardado.set_index("Materia Prima", inplace=True)
+        df_editado.set_index("Materia Prima", inplace=True)
+        df_guardado.update(df_editado[columnas_actualizables])
+        df_resultado = df_guardado.combine_first(df_editado).reset_index()
+    else:
+        df_resultado = df_editado.reset_index(drop=True)
+
+    st.session_state.formula_editada = df_resultado.copy()
 
     # Ejecutar lógica solo si se pulsa el botón
     aplicar_orden = st.button("✅ Aplicar nuevo orden manual")
@@ -113,3 +125,4 @@ def mostrar_editor_formula(df, seleccionadas):
         st.session_state.editando_formula = True
 
     return df_editado, total_pct
+
