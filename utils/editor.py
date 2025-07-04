@@ -7,7 +7,7 @@
 
 import streamlit as st
 import pandas as pd
-from utils.families import obtener_familias_parametros
+from utils.familias import obtener_familias_parametros
 
 def mostrar_editor_formula(df, seleccionadas):
     if "orden_personalizado" not in st.session_state:
@@ -18,9 +18,17 @@ def mostrar_editor_formula(df, seleccionadas):
     # Detectar si ha cambiado la selección de materias primas
     seleccionadas_previas = st.session_state.get("seleccionadas_previas", [])
     cambio_en_seleccion = seleccionadas != seleccionadas_previas
+
+    # Guardar el editor antes de que se actualice la selección
+    if cambio_en_seleccion and "formula_editor" in st.session_state:
+        try:
+            st.session_state.formula_editada = st.session_state["formula_editor"].copy()
+        except Exception:
+            pass  # En caso de que no esté listo aún
+
     st.session_state["seleccionadas_previas"] = seleccionadas.copy()
 
-    # Si ha cambiado la selección, señalamos que ya no está editando
+    # Si ha cambiado la selección, marcamos que ya no está editando
     if cambio_en_seleccion:
         st.session_state.editando_formula = False
 
@@ -102,4 +110,5 @@ def mostrar_editor_formula(df, seleccionadas):
         st.session_state.editando_formula = True
 
     return df_editado, total_pct
+
 
