@@ -10,13 +10,13 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from supabase_client import supabase
-from editor import mostrar_editor_formula
-from resultados import mostrar_resultados
-from families import obtener_familias_parametros
-from create_materia_prima import crear_materia_prima
-from update_materia_prima import actualizar_materia_prima
-from delete_materia_prima import eliminar_materia_prima
+from utils.supabase_client import supabase
+from utils.editor import mostrar_editor_formula
+from utils.resultados import mostrar_resultados
+from utils.families import obtener_familias_parametros
+from crud_mp.create_materia_prima import crear_materia_prima
+from crud_mp.update_materia_prima import actualizar_materia_prima
+from crud_mp.delete_materia_prima import eliminar_materia_prima
 
 def main():
     st.set_page_config(layout="wide")
