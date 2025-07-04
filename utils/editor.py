@@ -46,12 +46,27 @@ def mostrar_editor_formula(df, seleccionadas):
         hide_index=True
     )
 
-    # Actualizar orden_personalizado según edición manual del usuario
+    # Actualizar orden_personalizado según edición manual del usuario (asegura unicidad)
     if "Orden" in df_editado.columns and "Materia Prima" in df_editado.columns:
-        nuevo_orden = df_editado[["Materia Prima", "Orden"]].drop_duplicates()
+        nuevo_orden_df = df_editado[["Materia Prima", "Orden"]].drop_duplicates()
+
+        # Eliminar NaNs y convertir a int, luego asegurar orden único y consecutivo
+        nuevo_orden_df = nuevo_orden_df.dropna(subset=["Orden"]).copy()
+        nuevo_orden_df["Orden"] = nuevo_orden_df["Orden"].astype(int)
+
+        # Reasignar orden limpio (1, 2, 3...)
+        nuevo_orden_df = nuevo_orden_df.sort_values("Orden").reset_index(drop=True)
+        nuevo_orden_df["Orden"] = range(1, len(nuevo_orden_df) + 1)
+
+        # Guardar en session_state
         st.session_state.orden_personalizado = {
-            row["Materia Prima"]: int(row["Orden"]) for _, row in nuevo_orden.iterrows()
+            row["Materia Prima"]: row["Orden"] for _, row in nuevo_orden_df.iterrows()
         }
+
+    total_pct = df_editado["%"].sum()
+    st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
+    return df_editado, total_pct
+
 
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
