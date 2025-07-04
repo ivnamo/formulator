@@ -20,6 +20,10 @@ def mostrar_editor_formula(df, seleccionadas):
     cambio_en_seleccion = seleccionadas != seleccionadas_previas
     st.session_state["seleccionadas_previas"] = seleccionadas.copy()
 
+    # Si ha cambiado la selección, señalamos que ya no está editando
+    if cambio_en_seleccion:
+        st.session_state.editando_formula = False
+
     orden_actual = st.session_state.orden_personalizado
     df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
 
@@ -77,8 +81,8 @@ def mostrar_editor_formula(df, seleccionadas):
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
-    # Ejecutar lógica si pulsas el botón o si se detecta cambio en la selección
-    aplicar_orden = st.button("✅ Aplicar nuevo orden manual") or cambio_en_seleccion
+    # Ejecutar lógica solo si se pulsa el botón
+    aplicar_orden = st.button("✅ Aplicar nuevo orden manual")
     if aplicar_orden:
         if "Orden" in df_editado.columns and "Materia Prima" in df_editado.columns:
             nuevo_orden_df = df_editado[["Materia Prima", "Orden"]].drop_duplicates()
@@ -98,3 +102,4 @@ def mostrar_editor_formula(df, seleccionadas):
         st.session_state.editando_formula = True
 
     return df_editado, total_pct
+
