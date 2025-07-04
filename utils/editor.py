@@ -90,6 +90,9 @@ def mostrar_editor_formula(df, seleccionadas):
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
+    # Guardar automáticamente los datos editados en cada ejecución
+    st.session_state.formula_editada = df_editado.copy()
+
     # Ejecutar lógica solo si se pulsa el botón
     aplicar_orden = st.button("✅ Aplicar nuevo orden manual")
     if aplicar_orden:
@@ -104,11 +107,9 @@ def mostrar_editor_formula(df, seleccionadas):
                 row["Materia Prima"]: row["Orden"] for _, row in nuevo_orden_df.iterrows()
             }
 
-            st.session_state.formula_editada = df_editado.copy()
             st.session_state.editando_formula = False
             st.rerun()
     else:
         st.session_state.editando_formula = True
 
     return df_editado, total_pct
-
