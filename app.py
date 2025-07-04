@@ -12,6 +12,7 @@ from utils.supabase_client import supabase
 from utils.editor import mostrar_editor_formula
 from utils.resultados import mostrar_resultados
 from utils.families import obtener_familias_parametros
+from utils.orden_editor import mostrar_editor_orden
 from crud_mp.create_materia_prima import crear_materia_prima
 from crud_mp.update_materia_prima import actualizar_materia_prima
 from crud_mp.delete_materia_prima import eliminar_materia_prima
@@ -21,7 +22,6 @@ def main():
     st.title("Calculadora de Fórmulas - Composición + Coste")
 
     with st.sidebar:
-        # ✅ Logo centrado, con tamaño responsivo, sin fullscreen
         st.markdown("""
         <div style='display: flex; justify-content: center; align-items: center; padding: 10px 0;'>
             <img src='https://raw.githubusercontent.com/ivnamo/formulator/main/logo.png' style='width: 200px; height: auto; object-fit: contain;'>
@@ -87,10 +87,19 @@ def main():
             columnas_filtradas = columnas
 
         if abs(total_pct - 100) > 0.01:
-            st.warning("La suma de los porcentajes debe ser 100% para calcular.")
+            st.warning("⚠️ La suma de los porcentajes debe ser 100% para calcular.")
+            forzar = st.checkbox(
+                "🧪 Calcular de todos modos (forzar cálculo)",
+                help="Activa esta opción si deseas calcular aunque la fórmula no sume exactamente 100%."
+            )
+            if forzar:
+                st.info("Cálculo realizado con fórmula incompleta. Revisa los resultados con precaución.")
+                mostrar_resultados(df_editado, columnas_filtradas)
         else:
             mostrar_resultados(df_editado, columnas_filtradas)
 
+        # Mostrar editor de orden DESPUÉS de resultados
+        mostrar_editor_orden(df_editado)
+
 if __name__ == "__main__":
     main()
-
