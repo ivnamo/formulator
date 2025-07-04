@@ -1,21 +1,25 @@
-MIT License
+1. Titularidad y derechos de autor
+El software denominado FORMULATOR ha sido concebido, desarrollado y documentado en su totalidad por Iván Navarro, quien ostenta la titularidad exclusiva de todos los derechos de propiedad intelectual e industrial sobre el mismo. Esto incluye el código fuente, lógica de funcionamiento, estructura de datos, interfaz de usuario, documentación técnica y cualquier otro componente funcional o visual del programa.
 
-Copyright (c) 2025 ivnamo
+2. Uso exclusivo del autor
+FORMULATOR es un programa de uso estrictamente personal y exclusivo de su autor.
+El hecho de que se utilice en el contexto de una empresa, institución u organización no implica la existencia de una cesión, autorización ni licencia de uso, ni expresa ni tácita. El software es utilizado única y exclusivamente por su autor, incluso si se emplea en tareas laborales.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+3. Prohibiciones expresas
+Queda expresamente prohibido:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+    Ejecutar, usar, copiar, modificar, descompilar, distribuir o integrar FORMULATOR, total o parcialmente, sin consentimiento previo y por escrito de Iván Navarro.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+    Sublicenciar, comercializar o incorporar el software a otros productos o servicios.
+
+    Utilizar el software de forma autónoma o institucional tras la desvinculación del autor de cualquier entidad en la que lo haya usado.
+
+4. Condiciones en caso de desvinculación
+En caso de que Iván Navarro cese su colaboración, relación laboral o cualquier tipo de vínculo con la entidad en cuyo entorno se haya utilizado FORMULATOR, queda estrictamente prohibido su uso posterior por parte de dicha entidad o de cualquier tercero.
+Para su uso continuado será necesario un acuerdo comercial firmado con el autor, incluyendo la adquisición formal de los derechos de uso.
+
+5. Limitación de responsabilidad
+FORMULATOR se proporciona "tal cual" (as-is), sin garantía expresa o implícita. El autor no se responsabiliza por ningún daño derivado del uso, funcionamiento, mal funcionamiento o pérdida de datos vinculada al software.
+
+6. Legislación aplicable y jurisdicción
+Esta licencia se rige por la legislación española. Cualquier disputa legal derivada del uso o distribución no autorizada del software se resolverá ante los tribunales de Castellón de la Plana, con renuncia expresa a cualquier otro fuero que pudiera corresponder.
