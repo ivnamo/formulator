@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------
 
 import streamlit as st
-from families import obtener_familias_parametros
+from utils.families import obtener_familias_parametros
 
 def mostrar_editor_formula(df, seleccionadas):
     df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
