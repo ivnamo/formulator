@@ -18,18 +18,22 @@ def mostrar_editor_formula(df, seleccionadas):
     orden_actual = st.session_state.orden_personalizado
     df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
 
-    # Recuperar valores previos (%, etc.)
+    # Si no hay materias primas seleccionadas, limpiar valores guardados
+    if not seleccionadas:
+        st.session_state.formula_editada = pd.DataFrame()
+
+    # Recuperar valores previos (% u otros) por fila si coinciden
     df_guardado = st.session_state.formula_editada
     if not df_guardado.empty:
         columnas_a_copiar = [
             col for col in df_guardado.columns
             if col in df_filtrado.columns and col not in ["Orden", "Materia Prima"]
         ]
-        df_filtrado.set_index("Materia Prima", inplace=True)
-        df_guardado.set_index("Materia Prima", inplace=True)
-        df_filtrado.update(df_guardado[columnas_a_copiar])
-        df_filtrado.reset_index(inplace=True)
-        df_guardado.reset_index(inplace=True)
+        for mp in seleccionadas:
+            if mp in df_guardado["Materia Prima"].values:
+                fila_guardada = df_guardado[df_guardado["Materia Prima"] == mp].iloc[0]
+                for col in columnas_a_copiar:
+                    df_filtrado.loc[df_filtrado["Materia Prima"] == mp, col] = fila_guardada[col]
 
     # Detectar nuevas materias primas y asignarles orden nuevo
     max_orden = max(orden_actual.values(), default=0)
