@@ -7,7 +7,7 @@
 
 
 import pandas as pd
-from supabase_client import supabase
+from utils.supabase_client import supabase
 
 def cargar_datos(archivo):
     if archivo is not None:
