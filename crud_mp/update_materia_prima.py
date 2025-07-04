@@ -10,7 +10,7 @@ from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 import streamlit as st
 import pandas as pd
 import numpy as np
-from supabase_client import supabase
+from utils.supabase_client import supabase
 
 def actualizar_materia_prima():
     st.subheader("✏️ Actualizar materias primas")
