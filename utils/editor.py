@@ -21,19 +21,7 @@ def mostrar_editor_formula(df, seleccionadas):
     # Si no hay materias primas seleccionadas, limpiar valores guardados
     if not seleccionadas:
         st.session_state.formula_editada = pd.DataFrame()
-
-    # Recuperar valores previos (% u otros) por fila si coinciden
-    df_guardado = st.session_state.formula_editada
-    if not df_guardado.empty:
-        columnas_a_copiar = [
-            col for col in df_guardado.columns
-            if col in df_filtrado.columns and col not in ["Orden", "Materia Prima"]
-        ]
-        for mp in seleccionadas:
-            if mp in df_guardado["Materia Prima"].values:
-                fila_guardada = df_guardado[df_guardado["Materia Prima"] == mp].iloc[0]
-                for col in columnas_a_copiar:
-                    df_filtrado.loc[df_filtrado["Materia Prima"] == mp, col] = fila_guardada[col]
+        return pd.DataFrame(), 0.0
 
     # Detectar nuevas materias primas y asignarles orden nuevo
     max_orden = max(orden_actual.values(), default=0)
@@ -44,6 +32,19 @@ def mostrar_editor_formula(df, seleccionadas):
 
     df_filtrado["Orden"] = df_filtrado["Materia Prima"].map(orden_actual)
 
+    # Recuperar valores previos fila a fila, solo si no está ya editando
+    if st.session_state.formula_editada.empty is False and st.session_state.get("editando_formula") is not True:
+        df_guardado = st.session_state.formula_editada
+        columnas_a_copiar = [
+            col for col in df_guardado.columns
+            if col in df_filtrado.columns and col not in ["Orden", "Materia Prima"]
+        ]
+        for mp in seleccionadas:
+            if mp in df_guardado["Materia Prima"].values:
+                fila_guardada = df_guardado[df_guardado["Materia Prima"] == mp].iloc[0]
+                for col in columnas_a_copiar:
+                    df_filtrado.loc[df_filtrado["Materia Prima"] == mp, col] = fila_guardada[col]
+
     columnas_default = obtener_familias_parametros()
     columnas_composicion = [col for sub in columnas_default.values() for col in sub]
     columnas_mostrar = ["Orden", "Materia Prima", "Precio €/kg", "%"] + [
@@ -52,6 +53,7 @@ def mostrar_editor_formula(df, seleccionadas):
 
     df_filtrado = df_filtrado.sort_values("Orden").reset_index(drop=True)
 
+    # Mostrar editor
     df_editado = st.data_editor(
         df_filtrado[columnas_mostrar],
         use_container_width=True,
@@ -62,7 +64,7 @@ def mostrar_editor_formula(df, seleccionadas):
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
-    # Botón para aplicar manualmente el nuevo orden
+    # Guardar si el usuario pulsa botón
     if st.button("✅ Aplicar nuevo orden manual"):
         if "Orden" in df_editado.columns and "Materia Prima" in df_editado.columns:
             nuevo_orden_df = df_editado[["Materia Prima", "Orden"]].drop_duplicates()
@@ -75,10 +77,11 @@ def mostrar_editor_formula(df, seleccionadas):
                 row["Materia Prima"]: row["Orden"] for _, row in nuevo_orden_df.iterrows()
             }
 
+            st.session_state.formula_editada = df_editado.copy()
+            st.session_state.editando_formula = False
             st.rerun()
-
-    # Guardar copia del dataframe editado para no perder datos
-    st.session_state.formula_editada = df_editado.copy()
+    else:
+        # Si no se pulsa el botón, asumimos que está editando y no sobrescribimos nada
+        st.session_state.editando_formula = True
 
     return df_editado, total_pct
-
