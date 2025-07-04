@@ -6,23 +6,28 @@
 # ------------------------------------------------------------------------------
 # utils/orden_editor.py
 
+# utils/orden_editor.py
+
 import streamlit as st
 import pandas as pd
 
 def mostrar_editor_orden(df_editado):
     """
-    Muestra una tabla editable para definir el orden de materias primas,
-    y otra tabla final reordenada. Ambas dentro de expansores.
+    Tabla editable con columna 'Orden'. Al aplicar, se reordena en el mismo sitio.
     """
-    with st.expander("📋 Ordenar materias primas", expanded=False):
-        if "orden_df" not in st.session_state:
-            st.session_state.orden_df = pd.DataFrame({
-                "Orden": list(range(1, len(df_editado) + 1)),
-                "Materia Prima": df_editado["Materia Prima"].values,
-                "%": df_editado["%"].values
-            })
+    st.markdown("### 📋 Orden de materias primas")
 
-        st.session_state.orden_df = st.data_editor(
+    # Inicializar solo si no existe
+    if "orden_df" not in st.session_state or st.session_state.get("orden_df_len", 0) != len(df_editado):
+        st.session_state.orden_df = pd.DataFrame({
+            "Orden": list(range(1, len(df_editado) + 1)),
+            "Materia Prima": df_editado["Materia Prima"].values,
+            "%": df_editado["%"].values
+        })
+        st.session_state.orden_df_len = len(df_editado)
+
+    with st.expander("🧭 Ordenar materias primas", expanded=True):
+        orden_editado = st.data_editor(
             st.session_state.orden_df,
             column_config={
                 "Materia Prima": st.column_config.Column(disabled=True),
@@ -34,8 +39,6 @@ def mostrar_editor_orden(df_editado):
         )
 
         if st.button("🔄 Aplicar orden personalizado"):
-            st.session_state.orden_df = st.session_state.orden_df.sort_values("Orden").reset_index(drop=True)
-
-    with st.expander("📊 Ver tabla final ordenada", expanded=False):
-        if "orden_df" in st.session_state:
-            st.dataframe(st.session_state.orden_df, use_container_width=True, hide_index=True)
+            orden_editado = orden_editado.sort_values("Orden").reset_index(drop=True)
+            st.session_state.orden_df = orden_editado
+            st.success("✔ Orden actualizado.")
