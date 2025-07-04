@@ -1,4 +1,10 @@
-# families.py
+# ------------------------------------------------------------------------------
+# FORMULATOR – Uso exclusivo de Iván Navarro
+# Todos los derechos reservados © 2025
+# Este archivo forma parte de un software no libre y no está autorizado su uso
+# ni distribución sin consentimiento expreso y por escrito del autor.
+# ------------------------------------------------------------------------------
+
 
 from collections import defaultdict
 
