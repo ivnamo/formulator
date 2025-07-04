@@ -22,7 +22,6 @@ def main():
     st.title("Calculadora de Fórmulas - Composición + Coste")
 
     with st.sidebar:
-        # ✅ Logo centrado, con tamaño responsivo, sin fullscreen
         st.markdown("""
         <div style='display: flex; justify-content: center; align-items: center; padding: 10px 0;'>
             <img src='https://raw.githubusercontent.com/ivnamo/formulator/main/logo.png' style='width: 200px; height: auto; object-fit: contain;'>
@@ -71,7 +70,9 @@ def main():
 
     st.subheader("🧪 Fórmula editable")
     df_editado, total_pct = mostrar_editor_formula(df, seleccionadas)
-    df_editado = mostrar_editor_orden(df_editado)
+
+    # Tabla independiente para ordenar
+    mostrar_editor_orden(df_editado)
 
     if df_editado is not None:
         filtrar_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
@@ -95,4 +96,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
