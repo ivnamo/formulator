@@ -6,39 +6,48 @@
 # ------------------------------------------------------------------------------
 
 import streamlit as st
+import pandas as pd
 from utils.families import obtener_familias_parametros
 
 def mostrar_editor_formula(df, seleccionadas):
     if "orden_personalizado" not in st.session_state:
         st.session_state.orden_personalizado = {}
+    if "formula_editada" not in st.session_state:
+        st.session_state.formula_editada = pd.DataFrame()
 
-    # Diccionario actual de orden guardado por nombre
     orden_actual = st.session_state.orden_personalizado
-
-    # Filtrar el dataframe con las materias seleccionadas
     df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
 
-    # Detectar nuevas materias primas y asignarles orden nuevo al final
+    # Recuperar valores previos (%, etc.)
+    df_guardado = st.session_state.formula_editada
+    if not df_guardado.empty:
+        columnas_a_copiar = [
+            col for col in df_guardado.columns
+            if col in df_filtrado.columns and col not in ["Orden", "Materia Prima"]
+        ]
+        df_filtrado.set_index("Materia Prima", inplace=True)
+        df_guardado.set_index("Materia Prima", inplace=True)
+        df_filtrado.update(df_guardado[columnas_a_copiar])
+        df_filtrado.reset_index(inplace=True)
+        df_guardado.reset_index(inplace=True)
+
+    # Detectar nuevas materias primas y asignarles orden nuevo
     max_orden = max(orden_actual.values(), default=0)
     for mp in seleccionadas:
         if mp not in orden_actual:
             max_orden += 1
             orden_actual[mp] = max_orden
 
-    # Asignar la columna 'Orden' al dataframe para mostrar
     df_filtrado["Orden"] = df_filtrado["Materia Prima"].map(orden_actual)
 
-    # Obtener columnas técnicas por familia
     columnas_default = obtener_familias_parametros()
     columnas_composicion = [col for sub in columnas_default.values() for col in sub]
     columnas_mostrar = ["Orden", "Materia Prima", "Precio €/kg", "%"] + [
         col for col in df.columns if col in columnas_composicion
     ]
 
-    # Ordenar visualmente por Orden
     df_filtrado = df_filtrado.sort_values("Orden").reset_index(drop=True)
 
-    # Mostrar editor ocultando el índice
     df_editado = st.data_editor(
         df_filtrado[columnas_mostrar],
         use_container_width=True,
@@ -53,21 +62,19 @@ def mostrar_editor_formula(df, seleccionadas):
     if st.button("✅ Aplicar nuevo orden manual"):
         if "Orden" in df_editado.columns and "Materia Prima" in df_editado.columns:
             nuevo_orden_df = df_editado[["Materia Prima", "Orden"]].drop_duplicates()
-
-            # Eliminar NaNs y convertir a int, luego asegurar orden único y consecutivo
             nuevo_orden_df = nuevo_orden_df.dropna(subset=["Orden"]).copy()
             nuevo_orden_df["Orden"] = nuevo_orden_df["Orden"].astype(int)
-
-            # Reasignar orden limpio (1, 2, 3...)
             nuevo_orden_df = nuevo_orden_df.sort_values("Orden").reset_index(drop=True)
             nuevo_orden_df["Orden"] = range(1, len(nuevo_orden_df) + 1)
 
-            # Guardar en session_state
             st.session_state.orden_personalizado = {
                 row["Materia Prima"]: row["Orden"] for _, row in nuevo_orden_df.iterrows()
             }
 
-            # Recargar para aplicar
             st.rerun()
 
+    # Guardar copia del dataframe editado para no perder datos
+    st.session_state.formula_editada = df_editado.copy()
+
     return df_editado, total_pct
+
