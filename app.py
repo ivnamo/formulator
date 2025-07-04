@@ -71,9 +71,6 @@ def main():
     st.subheader("🧪 Fórmula editable")
     df_editado, total_pct = mostrar_editor_formula(df, seleccionadas)
 
-    # Tabla independiente para ordenar
-    mostrar_editor_orden(df_editado)
-
     if df_editado is not None:
         filtrar_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 
@@ -100,6 +97,9 @@ def main():
                 mostrar_resultados(df_editado, columnas_filtradas)
         else:
             mostrar_resultados(df_editado, columnas_filtradas)
+
+        # Mostrar editor de orden DESPUÉS de resultados
+        mostrar_editor_orden(df_editado)
 
 if __name__ == "__main__":
     main()
