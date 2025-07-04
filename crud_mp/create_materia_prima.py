@@ -8,7 +8,7 @@
 
 import streamlit as st
 import numpy as np
-from supabase_client import supabase
+from utils.supabase_client import supabase
 
 def crear_materia_prima():
     st.subheader("➕ Crear nueva materia prima")
