@@ -7,7 +7,7 @@
 
 import streamlit as st
 import pandas as pd
-from utils.families import obtener_familias_parametros
+from utils.familias import obtener_familias_parametros
 
 def mostrar_editor_formula(df, seleccionadas):
     if "orden_personalizado" not in st.session_state:
@@ -83,24 +83,34 @@ def mostrar_editor_formula(df, seleccionadas):
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
-    # 🔁 Guardado robusto: fusionar edición actual con historial
-    prev = st.session_state.formula_editada
-    if prev.empty:
-        st.session_state.formula_editada = df_editado.copy()
-    else:
-        columnas_actualizables = [
-            col for col in df_editado.columns if col not in ["Orden", "Materia Prima"]
-        ]
-        df_editado_indexed = df_editado.set_index("Materia Prima")
-        prev_indexed = prev.set_index("Materia Prima")
-        prev_indexed.update(df_editado_indexed[columnas_actualizables])
-        df_fusionado = pd.concat([
-            prev_indexed,
-            df_editado_indexed[~df_editado_indexed.index.isin(prev_indexed.index)]
-        ])
-        st.session_state.formula_editada = df_fusionado.reset_index()
+    # 🔘 NUEVO: Botón para guardar la fórmula y el orden
+    if st.button("💾 Guardar fórmula actual"):
+        # Guardar datos editados (% y otros)
+        prev = st.session_state.formula_editada
+        if prev.empty:
+            st.session_state.formula_editada = df_editado.copy()
+        else:
+            columnas_actualizables = [
+                col for col in df_editado.columns if col not in ["Orden", "Materia Prima"]
+            ]
+            df_editado_indexed = df_editado.set_index("Materia Prima")
+            prev_indexed = prev.set_index("Materia Prima")
+            prev_indexed.update(df_editado_indexed[columnas_actualizables])
+            df_fusionado = pd.concat([
+                prev_indexed,
+                df_editado_indexed[~df_editado_indexed.index.isin(prev_indexed.index)]
+            ])
+            st.session_state.formula_editada = df_fusionado.reset_index()
 
-    # Orden manual
+        # Guardar orden actualizado también
+        if "Orden" in df_editado.columns and "Materia Prima" in df_editado.columns:
+            st.session_state.orden_personalizado = {
+                row["Materia Prima"]: int(row["Orden"]) for _, row in df_editado.iterrows()
+            }
+
+        st.success("✅ Fórmula y orden guardados.")
+
+    # Botón adicional para reorganizar el orden manualmente
     aplicar_orden = st.button("✅ Aplicar nuevo orden manual")
     if aplicar_orden:
         if "Orden" in df_editado.columns and "Materia Prima" in df_editado.columns:
