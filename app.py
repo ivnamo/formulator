@@ -19,9 +19,17 @@ from crud_mp.delete_materia_prima import eliminar_materia_prima
 from utils.guardar_formula import guardar_formula
 from utils.generar_qr import generar_qr
 from utils.formula_resultados import calcular_resultado_formula
+from utils.cargar_formula import cargar_formula_por_id
 
 def main():
     st.set_page_config(layout="wide")
+
+    # 📥 Cargar fórmula desde la URL si se ha accedido con ?formula_id=...
+    params = st.query_params
+    if "formula_id" in params:
+        cargar_formula_por_id(params["formula_id"])
+        return
+
     st.title("Calculadora de Fórmulas - Composición + Coste")
 
     with st.sidebar:
