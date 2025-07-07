@@ -50,6 +50,7 @@ def cargar_formula_por_id(formula_id: str):
         precio_calc, composicion = calcular_resultado_formula(materias_primas, columnas)
 
         st.markdown("#### 📊 Composición estimada")
+        composicion = composicion[composicion["Cantidad %"] > 0]  # ❌ Eliminar valores cero
         if not composicion.empty:
             composicion_formateada = composicion.reset_index()
             composicion_formateada.columns = ["Parámetro", "% p/p"]
