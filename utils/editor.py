@@ -59,7 +59,9 @@ def mostrar_editor_formula(df, seleccionadas):
     df_editado.reset_index(drop=True, inplace=True)
 
     # Mostrar DataFrame para verificar orden y columnas
-    st.dataframe(df_editado, use_container_width=True)
+    # st.dataframe(df_editado, use_container_width=True)
+    st.dataframe(df_editado.rename(columns={"%": "Porcentaje"}), use_container_width=True)
+
 
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
