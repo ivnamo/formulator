@@ -3,4 +3,7 @@ pandas
 openpyxl
 supabase
 streamlit-aggrid
+qrcode
+Pillow
+
 
