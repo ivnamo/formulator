@@ -56,6 +56,10 @@ def mostrar_editor_formula(df, seleccionadas):
         df_editado.sort_values("__rowIndex__", inplace=True)
         df_editado.drop(columns="__rowIndex__", inplace=True)
 
+    # ❌ Si falta %, recuperarla del original filtrado
+    if "%" not in df_editado.columns and "%" in df_filtrado.columns:
+        df_editado["%"] = df_filtrado["%"]
+
     df_editado.reset_index(drop=True, inplace=True)
 
     # 🔍 Mostrar DataFrame con la columna % renombrada para visualización correcta
