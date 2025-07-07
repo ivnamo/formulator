@@ -12,7 +12,6 @@ from utils.supabase_client import supabase
 from utils.editor import mostrar_editor_formula
 from utils.resultados import mostrar_resultados
 from utils.families import obtener_familias_parametros
-from utils.orden_editor import mostrar_editor_orden
 from crud_mp.create_materia_prima import crear_materia_prima
 from crud_mp.update_materia_prima import actualizar_materia_prima
 from crud_mp.delete_materia_prima import eliminar_materia_prima
@@ -127,7 +126,6 @@ def main():
                     st.image(qr_img, caption="Código QR para esta fórmula", use_column_width=False)
                     st.code(url_formula, language="markdown")
 
-        mostrar_editor_orden(df_editado)
-
 if __name__ == "__main__":
     main()
+
