@@ -46,7 +46,7 @@ def cargar_formula_por_id(formula_id: str):
 
         st.dataframe(materias_vista, use_container_width=True)
 
-        columnas = [col for col in materias_primas.columns if col not in ["Materia Prima", "Precio €/kg", "%"]]
+        columnas = [col for col in materias_primas.columns if col not in ["id", "Materia Prima", "Precio €/kg", "%"]]
         precio_calc, composicion = calcular_resultado_formula(materias_primas, columnas)
 
         st.markdown("#### 📊 Composición estimada")
