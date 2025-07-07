@@ -44,7 +44,7 @@ def cargar_formula_por_id(formula_id: str):
                 cols = [col for col in cols if col in ["Materia Prima", "Porcentaje"]]
                 materias_vista = materias_vista[cols]
 
-        st.dataframe(materias_vista, use_container_width=True)
+        st.dataframe(materias_vista.reset_index(drop=True), use_container_width=True)
 
         columnas = [col for col in materias_primas.columns if col not in ["id", "Materia Prima", "Precio €/kg", "%"]]
         precio_calc, composicion = calcular_resultado_formula(materias_primas, columnas)
@@ -59,4 +59,3 @@ def cargar_formula_por_id(formula_id: str):
             st.info("No hay parámetros significativos en la fórmula.")
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
-
