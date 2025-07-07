@@ -45,7 +45,8 @@ def mostrar_editor_formula(df, seleccionadas):
         fit_columns_on_grid_load=False,
         height=300,
         allow_unsafe_jscode=True,
-        theme="streamlit"
+        theme="streamlit",
+        enable_enterprise_modules=False
     )
 
     df_editado = grid_response["data"].copy()
@@ -56,6 +57,10 @@ def mostrar_editor_formula(df, seleccionadas):
         df_editado.drop(columns="__rowIndex__", inplace=True)
 
     df_editado.reset_index(drop=True, inplace=True)
+
+    # Mostrar DataFrame para verificar orden y columnas
+    st.dataframe(df_editado, use_container_width=True)
+
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
