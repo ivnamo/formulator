@@ -62,10 +62,16 @@ def mostrar_editor_formula(df, seleccionadas):
 
     df_editado.reset_index(drop=True, inplace=True)
 
-    # 🔍 Mostrar DataFrame con la columna % renombrada para visualización correcta
+    # 🔍 Mostrar DataFrame con la columna % renombrada y reordenada
     df_vista = df_editado.copy()
     if "%" in df_vista.columns:
         df_vista.rename(columns={"%": "Porcentaje"}, inplace=True)
+        cols = df_vista.columns.tolist()
+        if "Porcentaje" in cols and "Materia Prima" in cols:
+            cols.remove("Porcentaje")
+            idx = cols.index("Materia Prima") + 1
+            cols.insert(idx, "Porcentaje")
+            df_vista = df_vista[cols]
 
     st.dataframe(df_vista, use_container_width=True)
 
@@ -73,3 +79,4 @@ def mostrar_editor_formula(df, seleccionadas):
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
     return df_editado, total_pct
+
