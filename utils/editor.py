@@ -36,7 +36,11 @@ def mostrar_editor_formula(df, seleccionadas):
     for col in columnas_tecnicas:
         gb.configure_column(col, width=70)
 
-    gb.configure_grid_options(rowDragManaged=True)
+    # 💡 Eliminar filtros completamente del grid
+    gb.configure_grid_options(
+        rowDragManaged=True,
+        enableFilter=False  # ✅ Esto elimina iconos de filtro de cada columna
+    )
 
     grid_options = gb.build()
 
