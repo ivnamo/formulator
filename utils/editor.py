@@ -49,6 +49,13 @@ def mostrar_editor_formula(df, seleccionadas):
     )
 
     df_editado = grid_response["data"].copy()
+
+    # 🔄 Corregir el orden visual de las filas si está presente
+    if "__rowIndex__" in df_editado.columns:
+        df_editado.sort_values("__rowIndex__", inplace=True)
+        df_editado.drop(columns="__rowIndex__", inplace=True)
+
+    df_editado.reset_index(drop=True, inplace=True)
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
