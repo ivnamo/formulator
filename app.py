@@ -123,7 +123,7 @@ def main():
                     qr_img = generar_qr(url_formula)
 
                     st.success("✅ Fórmula guardada correctamente.")
-                    st.image(qr_img, caption="Código QR para esta fórmula", use_column_width=False)
+                    st.image(qr_img, caption="Código QR para esta fórmula", use_container_width=True)
                     st.code(url_formula, language="markdown")
 
 if __name__ == "__main__":
