@@ -5,7 +5,6 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
-
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 import streamlit as st
 import pandas as pd
@@ -26,7 +25,17 @@ def mostrar_editor_formula(df, seleccionadas):
     # Configuración sin filtros ni orden, con anchos controlados
     gb = GridOptionsBuilder.from_dataframe(df_filtrado[columnas_mostrar])
     gb.configure_default_column(editable=True, resizable=True, filter=False, sortable=False)
+
+    # Columnas principales con ancho amplio o medio
     gb.configure_column("Materia Prima", editable=False, rowDrag=True, width=240)
+    gb.configure_column("Precio €/kg", width=100)
+    gb.configure_column("%", width=70)
+
+    # Columnas técnicas con ancho compacto
+    columnas_tecnicas = [col for col in columnas_mostrar if col not in ["Materia Prima", "Precio €/kg", "%"]]
+    for col in columnas_tecnicas:
+        gb.configure_column(col, width=70)
+
     gb.configure_grid_options(rowDragManaged=True)
 
     grid_options = gb.build()
@@ -36,7 +45,7 @@ def mostrar_editor_formula(df, seleccionadas):
         gridOptions=grid_options,
         update_mode=GridUpdateMode.MODEL_CHANGED,
         fit_columns_on_grid_load=False,
-        height=600,
+        height=300,
         allow_unsafe_jscode=True,
         theme="streamlit"
     )
@@ -46,3 +55,4 @@ def mostrar_editor_formula(df, seleccionadas):
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
     return df_editado, total_pct
+
