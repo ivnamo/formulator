@@ -26,21 +26,17 @@ def mostrar_editor_formula(df, seleccionadas):
     gb = GridOptionsBuilder.from_dataframe(df_filtrado[columnas_mostrar])
     gb.configure_default_column(editable=True, resizable=True, filter=False, sortable=False)
 
-    # Columnas principales con ancho amplio o medio
-    gb.configure_column("Materia Prima", editable=False, rowDrag=True, width=240)
-    gb.configure_column("Precio €/kg", width=100)
-    gb.configure_column("%", width=70)
+    # Columnas principales
+    gb.configure_column("Materia Prima", editable=False, rowDrag=True, width=240, filter=False)
+    gb.configure_column("Precio €/kg", width=100, filter=False)
+    gb.configure_column("%", width=70, filter=False)
 
-    # Columnas técnicas con ancho compacto
+    # Columnas técnicas compactas sin filtro
     columnas_tecnicas = [col for col in columnas_mostrar if col not in ["Materia Prima", "Precio €/kg", "%"]]
     for col in columnas_tecnicas:
-        gb.configure_column(col, width=70)
+        gb.configure_column(col, width=70, filter=False)
 
-    # 💡 Eliminar filtros completamente del grid
-    gb.configure_grid_options(
-        rowDragManaged=True,
-        enableFilter=False  # ✅ Esto elimina iconos de filtro de cada columna
-    )
+    gb.configure_grid_options(rowDragManaged=True)
 
     grid_options = gb.build()
 
@@ -59,4 +55,3 @@ def mostrar_editor_formula(df, seleccionadas):
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
     return df_editado, total_pct
-
