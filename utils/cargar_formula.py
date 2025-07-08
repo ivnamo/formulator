@@ -10,6 +10,7 @@ import pandas as pd
 import json
 from utils.supabase_client import supabase
 from utils.formula_resultados import calcular_resultado_formula
+from utils.generar_etiqueta_zpl import generar_etiqueta_zpl
 
 def cargar_formula_por_id(formula_id: str):
     """
@@ -30,10 +31,13 @@ def cargar_formula_por_id(formula_id: str):
 
         nombre = data["nombre"]
         precio = data["precio_total"]
+        fecha = data.get("fecha_creacion", "")
         materias_primas = pd.DataFrame(json.loads(data["materias_primas"]))
 
         st.markdown(f"### 🧪 **{nombre}**")
         st.markdown(f"**💰 Precio por kg:** {precio:.2f} €")
+        if fecha:
+            st.markdown(f"**📅 Fecha de creación:** {fecha.split('T')[0]}")
 
         # 🔒 Reordenar y renombrar columna % para mejor visualización
         materias_vista = materias_primas.copy()
@@ -57,5 +61,14 @@ def cargar_formula_por_id(formula_id: str):
             st.markdown(composicion_formateada.to_html(index=False), unsafe_allow_html=True)
         else:
             st.info("No hay parámetros significativos en la fórmula.")
+
+        url_formula = f"https://formulator-pruebas2.streamlit.app/?formula_id={formula_id}"
+        zpl_code = generar_etiqueta_zpl(nombre, fecha.split('T')[0] if fecha else '', url_formula)
+        st.download_button(
+            "Descargar etiqueta ZPL",
+            zpl_code,
+            file_name="etiqueta.zpl",
+            mime="text/plain",
+        )
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
