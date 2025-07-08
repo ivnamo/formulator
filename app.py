@@ -48,9 +48,6 @@ def flujo_crear_formula():
     st.subheader("🧪 Fórmula editable")
     df_editado, total_pct = mostrar_editor_formula(df, seleccionadas)
 
-    if df_editado is None:
-        return
-
     filtrar_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 
     familias = obtener_familias_parametros()
