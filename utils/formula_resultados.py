@@ -27,7 +27,7 @@ def calcular_resultado_formula(df_editado, columnas_composicion):
     # Asegurar que solo se usen columnas que existen realmente
     columnas_existentes = [col for col in columnas_composicion if col in df_filtrado.columns]
 
-    # Inicializar columnas faltantes con 0.0 (opcional y seguro para filas nuevas)
+    # Calcular la contribución de cada columna existente
     for col in columnas_existentes:
         df_filtrado[col] = (df_filtrado[col] * df_filtrado["%"]) / 100
 
