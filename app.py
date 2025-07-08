@@ -121,7 +121,7 @@ def main():
         """, unsafe_allow_html=True)
 
         st.markdown("### Navegación")
-        menu = st.radio("Navegación", ["Formular", "Formulas", "Materias Primas"], label_visibility="collapsed")
+        menu = st.radio("Navegación", ["Formulas", "Materias Primas"], label_visibility="collapsed")
 
         st.markdown("---")
         st.markdown("""
@@ -157,8 +157,7 @@ def main():
                 cargar_formula_por_id(formula_id)
         return
 
-    # Opción "Formular" por defecto
-    flujo_crear_formula()
+
 
 if __name__ == "__main__":
     main()
