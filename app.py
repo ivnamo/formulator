@@ -26,9 +26,19 @@ from utils.cargar_formula import cargar_formula_por_id
 
 def flujo_crear_formula():
     """Interfaz para crear y guardar nuevas fórmulas."""
-    response = supabase.table("materias_primas").select("*").execute()
-    df = pd.DataFrame(response.data)
-    df["%"] = 0.0
+    # 🔄 Cargar las materias primas una única vez y mantener en sesión
+    if "mp_df" not in st.session_state:
+        response = supabase.table("materias_primas").select("*").execute()
+        df_mp = pd.DataFrame(response.data)
+        df_mp["%"] = 0.0
+        st.session_state.mp_df = df_mp
+    df = st.session_state.mp_df
+
+    # 📌 DataFrame con la fórmula actual en edición
+    if "formula_df" not in st.session_state:
+        st.session_state.formula_df = pd.DataFrame(columns=df.columns)
+
+    formula_df = st.session_state.formula_df
 
     if "Materia Prima" not in df.columns:
         st.error("La columna 'Materia Prima' no está disponible en los datos.")
@@ -37,16 +47,35 @@ def flujo_crear_formula():
     seleccionadas = st.multiselect(
         "Busca y selecciona las materias primas",
         options=df["Materia Prima"].dropna().tolist(),
+        value=formula_df["Materia Prima"].tolist(),
         help="Puedes escribir para buscar por nombre",
         key="mp_crear",
     )
 
     if not seleccionadas:
         st.info("Selecciona materias primas desde el buscador para comenzar.")
+        st.session_state.formula_df = pd.DataFrame(columns=df.columns)
         return
 
+    # 🔄 Mantener orden y porcentajes al modificar la selección
+    actuales = formula_df["Materia Prima"].tolist()
+
+    # Añadir nuevas materias al final
+    nuevas = [mp for mp in seleccionadas if mp not in actuales]
+    if nuevas:
+        nuevas_filas = df[df["Materia Prima"].isin(nuevas)]
+        formula_df = pd.concat([formula_df, nuevas_filas], ignore_index=True)
+
+    # Eliminar las que ya no estén seleccionadas
+    formula_df = formula_df[formula_df["Materia Prima"].isin(seleccionadas)]
+
+    st.session_state.formula_df = formula_df.reset_index(drop=True)
+
     st.subheader("🧪 Fórmula editable")
-    df_editado, total_pct = mostrar_editor_formula(df, seleccionadas)
+    df_editado, total_pct = mostrar_editor_formula(
+        st.session_state.formula_df, seleccionadas
+    )
+    st.session_state.formula_df = df_editado
 
     filtrar_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 
