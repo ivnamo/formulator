@@ -26,9 +26,19 @@ from utils.cargar_formula import cargar_formula_por_id
 
 def flujo_crear_formula():
     """Interfaz para crear y guardar nuevas fórmulas."""
-    response = supabase.table("materias_primas").select("*").execute()
-    df = pd.DataFrame(response.data)
-    df["%"] = 0.0
+    # 🔄 Cargar las materias primas una única vez y mantener en sesión
+    if "mp_df" not in st.session_state:
+        response = supabase.table("materias_primas").select("*").execute()
+        df_mp = pd.DataFrame(response.data)
+        df_mp["%"] = 0.0
+        st.session_state.mp_df = df_mp
+    df = st.session_state.mp_df
+
+    # 📌 DataFrame con la fórmula actual en edición
+    if "formula_df" not in st.session_state:
+        st.session_state.formula_df = pd.DataFrame(columns=df.columns)
+
+    formula_df = st.session_state.formula_df
 
     if "Materia Prima" not in df.columns:
         st.error("La columna 'Materia Prima' no está disponible en los datos.")
@@ -37,16 +47,39 @@ def flujo_crear_formula():
     seleccionadas = st.multiselect(
         "Busca y selecciona las materias primas",
         options=df["Materia Prima"].dropna().tolist(),
+        default=formula_df["Materia Prima"].tolist(),
         help="Puedes escribir para buscar por nombre",
         key="mp_crear",
     )
 
     if not seleccionadas:
         st.info("Selecciona materias primas desde el buscador para comenzar.")
+        st.session_state.formula_df = pd.DataFrame(columns=df.columns)
         return
 
+    # 🔄 Sincronizar la fórmula con la selección manteniendo porcentajes y orden
+    df_seleccion = df[df["Materia Prima"].isin(seleccionadas)].copy()
+    if not formula_df.empty:
+        for mp in seleccionadas:
+            mask = formula_df["Materia Prima"] == mp
+            if mask.any():
+                df_seleccion.loc[df_seleccion["Materia Prima"] == mp, "%"] = \
+                    formula_df.loc[mask, "%"].iloc[0]
+
+        orden = {mp: i for i, mp in enumerate(formula_df["Materia Prima"])}
+        df_seleccion["__ord"] = df_seleccion["Materia Prima"].map(
+            lambda x: orden.get(x, len(orden) + 1)
+        )
+        df_seleccion.sort_values("__ord", inplace=True)
+        df_seleccion.drop(columns="__ord", inplace=True)
+
+    st.session_state.formula_df = df_seleccion.reset_index(drop=True)
+
     st.subheader("🧪 Fórmula editable")
-    df_editado, total_pct = mostrar_editor_formula(df, seleccionadas)
+    df_editado, total_pct = mostrar_editor_formula(
+        st.session_state.formula_df, seleccionadas
+    )
+    st.session_state.formula_df = df_editado
 
     filtrar_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 
