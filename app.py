@@ -24,11 +24,43 @@ from utils.formula_resultados import calcular_resultado_formula
 from utils.cargar_formula import cargar_formula_por_id
 
 
+def _sincronizar_formula(seleccionadas, df_mp, formula_df):
+    """Mantiene la fórmula en sesión acorde a la selección actual."""
+    orden_previa = formula_df["Materia Prima"].tolist()
+
+    # Conservar solo las materias primas seleccionadas
+    formula_df = formula_df[formula_df["Materia Prima"].isin(seleccionadas)].copy()
+
+    # Añadir las nuevas selecciones al final
+    nuevas = [mp for mp in seleccionadas if mp not in orden_previa]
+    if nuevas:
+        df_nuevas = df_mp[df_mp["Materia Prima"].isin(nuevas)].copy()
+        formula_df = pd.concat([formula_df, df_nuevas], ignore_index=True)
+
+    # Ordenar siguiendo la secuencia previa y, para las nuevas, la de seleccionadas
+    orden_final = [mp for mp in orden_previa if mp in seleccionadas] + nuevas
+    formula_df["__ord"] = formula_df["Materia Prima"].apply(orden_final.index)
+    formula_df.sort_values("__ord", inplace=True)
+    formula_df.drop(columns="__ord", inplace=True)
+
+    return formula_df.reset_index(drop=True)
+
+
 def flujo_crear_formula():
     """Interfaz para crear y guardar nuevas fórmulas."""
-    response = supabase.table("materias_primas").select("*").execute()
-    df = pd.DataFrame(response.data)
-    df["%"] = 0.0
+    # 🔄 Cargar las materias primas una única vez y mantener en sesión
+    if "mp_df" not in st.session_state:
+        response = supabase.table("materias_primas").select("*").execute()
+        df_mp = pd.DataFrame(response.data)
+        df_mp["%"] = 0.0
+        st.session_state.mp_df = df_mp
+    df = st.session_state.mp_df
+
+    # 📌 DataFrame con la fórmula actual en edición
+    if "formula_df" not in st.session_state:
+        st.session_state.formula_df = pd.DataFrame(columns=df.columns)
+
+    formula_df = st.session_state.formula_df
 
     if "Materia Prima" not in df.columns:
         st.error("La columna 'Materia Prima' no está disponible en los datos.")
@@ -37,16 +69,25 @@ def flujo_crear_formula():
     seleccionadas = st.multiselect(
         "Busca y selecciona las materias primas",
         options=df["Materia Prima"].dropna().tolist(),
+        default=formula_df["Materia Prima"].tolist(),
         help="Puedes escribir para buscar por nombre",
         key="mp_crear",
     )
 
     if not seleccionadas:
         st.info("Selecciona materias primas desde el buscador para comenzar.")
+        st.session_state.formula_df = pd.DataFrame(columns=df.columns)
         return
 
+    st.session_state.formula_df = _sincronizar_formula(
+        seleccionadas, df, formula_df
+    )
+
     st.subheader("🧪 Fórmula editable")
-    df_editado, total_pct = mostrar_editor_formula(df, seleccionadas)
+    df_editado, total_pct = mostrar_editor_formula(
+        st.session_state.formula_df, seleccionadas
+    )
+    st.session_state.formula_df = df_editado
 
     filtrar_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 

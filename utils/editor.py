@@ -42,11 +42,13 @@ def mostrar_editor_formula(df, seleccionadas):
         df_filtrado,
         gridOptions=grid_options,
         update_mode=GridUpdateMode.MODEL_CHANGED,
+        update_on=["rowDragEnd"],
         fit_columns_on_grid_load=False,
         height=300,
         allow_unsafe_jscode=True,
         theme="streamlit",
-        enable_enterprise_modules=False
+        enable_enterprise_modules=False,
+        key=f"editor_grid_{len(df_filtrado)}",
     )
 
     df_editado = grid_response["data"].copy()
