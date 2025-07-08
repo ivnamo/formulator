@@ -7,7 +7,6 @@
 
 
 import streamlit as st
-import numpy as np
 from utils.supabase_client import supabase
 
 def crear_materia_prima():
