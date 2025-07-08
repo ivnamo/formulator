@@ -45,7 +45,7 @@ def main():
         st.markdown("""
         **Desarrollado por:** Iván Navarro  
         **Versión:** 1.0.0  
-        **Fecha:** 01/07/2005
+        **Fecha:** 01/07/2025
         """)
 
     if menu == "Materias Primas":
