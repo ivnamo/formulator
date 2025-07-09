@@ -46,10 +46,18 @@ def flujo_crear_formula():
         return
 
     st.subheader("🧪 Fórmula editable")
-    #df_editado, total_pct = mostrar_editor_formula(df, seleccionadas)
-    df_base = st.session_state.get("formula_temporal", df)
-    df_editado, total_pct = mostrar_editor_formula(df_base, seleccionadas)
 
+    # Mezclar la selección con fórmula guardada (si existe)
+    df_guardada = st.session_state.get("formula_temporal", pd.DataFrame())
+    df_base = df.copy()
+
+    if not df_guardada.empty:
+        for _, row in df_guardada.iterrows():
+            mask = df_base["Materia Prima"] == row["Materia Prima"]
+            if mask.any():
+                df_base.loc[mask, "%"] = row["%"]
+
+    df_editado, total_pct = mostrar_editor_formula(df_base, seleccionadas)
 
     filtrar_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 
@@ -100,6 +108,10 @@ def flujo_crear_formula():
                 st.success("✅ Fórmula guardada correctamente.")
                 st.image(qr_img, caption="Código QR para esta fórmula", use_container_width=False)
                 st.code(url_formula, language="markdown")
+
+                # ✅ Limpiar estado temporal tras guardar
+                if "formula_temporal" in st.session_state:
+                    del st.session_state["formula_temporal"]
 
 
 def main():
