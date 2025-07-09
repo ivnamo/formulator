@@ -78,5 +78,11 @@ def mostrar_editor_formula(df, seleccionadas):
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
 
+    # 💾 Botón para guardar cambios en memoria
+    if st.button("💾 Guardar cambios actuales (sin cerrar)", key="guardar_temp"):
+        st.session_state["formula_temporal"] = df_editado.copy()
+        st.success("✅ Cambios guardados en memoria. Puedes añadir nuevas materias primas sin perder datos.")
+
     return df_editado, total_pct
+
 
