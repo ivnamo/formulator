@@ -46,10 +46,7 @@ def flujo_crear_formula():
         return
 
     st.subheader("🧪 Fórmula editable")
-    #df_editado, total_pct = mostrar_editor_formula(df, seleccionadas)
-    df_base = st.session_state.get("formula_temporal", df)
-    df_editado, total_pct = mostrar_editor_formula(df_base, seleccionadas)
-
+    df_editado, total_pct = mostrar_editor_formula(df, seleccionadas)
 
     filtrar_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
 
