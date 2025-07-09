@@ -114,6 +114,7 @@ def flujo_crear_formula():
                     del st.session_state["formula_temporal"]
 
 
+
 def main():
     st.set_page_config(layout="wide")
 
