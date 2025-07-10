@@ -74,6 +74,15 @@ def flujo_crear_formula():
             if not nombre_formula.strip():
                 st.warning("Debes ingresar un nombre para guardar la fórmula.")
             else:
+                # ✅ Reordenar columnas antes de guardar/exportar
+                columnas_base = ["Materia Prima", "%", "Precio €/kg"]
+                columnas_tecnicas = [
+                    col for col in df_editado.columns
+                    if col not in columnas_base and col != "id"
+                ]
+                columnas_ordenadas = columnas_base + columnas_tecnicas
+                df_editado = df_editado[columnas_ordenadas]
+
                 precio, _ = calcular_resultado_formula(df_editado, columnas_filtradas)
                 formula_id = guardar_formula(df_editado, nombre_formula.strip(), precio)
                 url_formula = f"https://formulator-pruebas2.streamlit.app/?formula_id={formula_id}"
