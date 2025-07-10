@@ -38,47 +38,44 @@ def cargar_formula_por_id(formula_id: str):
         st.markdown(f"### 🧪 **{nombre}**")
         st.markdown(f"**💰 Precio por kg:** {precio:.2f} €")
 
-        # 🔒 Reordenar y renombrar columna % para mejor visualización
-        materias_vista = materias_primas.copy()
-        if "%" in materias_vista.columns:
-            materias_vista.rename(columns={"%": "Porcentaje"}, inplace=True)
-            cols = materias_vista.columns.tolist()
-            if "Porcentaje" in cols and "Materia Prima" in cols:
-                cols = [col for col in cols if col in ["Materia Prima", "Porcentaje"]]
-                materias_vista = materias_vista[cols]
+        # 🔃 Reordenar columnas: Materia Prima, %, Precio €/kg, luego parámetros técnicos
+        columnas_base = ["Materia Prima", "%", "Precio €/kg"]
+        columnas_tecnicas = [
+            col for col in materias_primas.columns
+            if col not in columnas_base and col != "id"
+        ]
+        orden_columnas = columnas_base + columnas_tecnicas
+        materias_primas = materias_primas[orden_columnas]
 
+        # 👁 Vista previa con % renombrado para pantalla
+        materias_vista = materias_primas.rename(columns={"%": "Porcentaje"}).copy()
         st.markdown(materias_vista.to_html(index=False), unsafe_allow_html=True)
 
-        columnas = [col for col in materias_primas.columns if col not in ["id", "Materia Prima", "Precio €/kg", "%"]]
-        precio_calc, composicion = calcular_resultado_formula(materias_primas, columnas)
+        # 📊 Cálculo de composición
+        precio_calc, composicion = calcular_resultado_formula(materias_primas, columnas_tecnicas)
 
         st.markdown("#### 📊 Composición estimada")
-        composicion = composicion[composicion["Cantidad %"] > 0]  # ❌ Eliminar valores cero
+        composicion = composicion[composicion["Cantidad %"] > 0]
         if not composicion.empty:
             composicion_formateada = composicion.reset_index()
             composicion_formateada.columns = ["Parámetro", "% p/p"]
             st.markdown(composicion_formateada.to_html(index=False), unsafe_allow_html=True)
         else:
             st.info("No hay parámetros significativos en la fórmula.")
+
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
+        return
 
     # 📤 Exportar a Excel (sin totales ni fórmulas)
     st.markdown("---")
     st.subheader("📤 Exportar esta fórmula")
 
     if st.button("⬇️ Exportar a Excel"):
-        df_export = materias_primas.copy()
-        columnas_utiles = ["Materia Prima", "Precio €/kg", "%"] + [
-            col for col in df_export.columns
-            if col not in ["id", "Materia Prima", "Precio €/kg", "%"]
-        ]
-        df_export = df_export[columnas_utiles]
-        excel_bytes = exportar_formula_excel(df_export, nombre)
+        excel_bytes = exportar_formula_excel(materias_primas, nombre)
         st.download_button(
             label="📄 Descargar archivo Excel",
             data=excel_bytes,
             file_name=f"{nombre}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
