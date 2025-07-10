@@ -63,12 +63,18 @@ def cargar_formula_por_id(formula_id: str):
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
 
-    # 🔽 Exportar a Excel
+    # 📤 Exportar a Excel (sin totales ni fórmulas)
     st.markdown("---")
-    st.subheader("📤 Exportar fórmula a Excel")
+    st.subheader("📤 Exportar esta fórmula")
 
-    if st.button("⬇️ Exportar esta fórmula"):
-        excel_bytes = exportar_formula_excel(materias_primas, nombre)
+    if st.button("⬇️ Exportar a Excel"):
+        df_export = materias_primas.copy()
+        columnas_utiles = ["Materia Prima", "Precio €/kg", "%"] + [
+            col for col in df_export.columns
+            if col not in ["id", "Materia Prima", "Precio €/kg", "%"]
+        ]
+        df_export = df_export[columnas_utiles]
+        excel_bytes = exportar_formula_excel(df_export, nombre)
         st.download_button(
             label="📄 Descargar archivo Excel",
             data=excel_bytes,
