@@ -18,7 +18,7 @@ def mostrar_editor_formula(df, seleccionadas):
 
     columnas_default = obtener_familias_parametros()
     columnas_composicion = [col for sub in columnas_default.values() for col in sub]
-    columnas_mostrar = ["Materia Prima", "Precio €/kg", "%"] + [
+    columnas_mostrar = ["Materia Prima","%","Precio €/kg"] + [
         col for col in df_filtrado.columns if col in columnas_composicion
     ]
 
