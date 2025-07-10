@@ -1,60 +1,41 @@
-# ------------------------------------------------------------------------------
-# FORMULATOR – Uso exclusivo de Iván Navarro
-# Todos los derechos reservados © 2025
-# Este archivo forma parte de un software no libre y no está autorizado su uso
-# ni distribución sin consentimiento expreso y por escrito del autor.
-# ------------------------------------------------------------------------------
-
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from io import BytesIO
 
 def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
-    """
-    Exporta una fórmula a Excel con subtotal y composición técnica calculada.
-
-    Args:
-        df (pd.DataFrame): DataFrame con columnas 'Materia Prima', 'Precio €/kg', '%', parámetros técnicos.
-        nombre_formula (str): Nombre para el archivo.
-
-    Returns:
-        BytesIO: Excel listo para descargar.
-    """
     wb = Workbook()
     ws = wb.active
     ws.title = "Fórmula"
 
-    # Columnas base + técnicas + subtotal
-    columnas_base = ["Materia Prima", "Precio €/kg", "%"]
-    columnas_tecnicas = [col for col in df.columns if col not in columnas_base]
-    columnas_final = columnas_base + columnas_tecnicas + ["Subtotal €/kg"]
-    ws.append(columnas_final)
+    # Columnas que interesan
+    columnas_base = ["Materia Prima", "%"]
+    columnas_tecnicas = [col for col in df.columns if col not in columnas_base and col != "Precio €/kg"]
+    columnas_final = columnas_base + columnas_tecnicas
 
-    for i, row in enumerate(df.itertuples(index=False), start=2):
-        fila = [row._asdict().get(col, "") for col in columnas_base]
+    # Escribir encabezados
+    for col_idx, col_name in enumerate(columnas_final, start=1):
+        ws.cell(row=1, column=col_idx, value=col_name)
 
-        # columnas técnicas con fórmula: =valor * $C2 / 100
-        for j, col in enumerate(columnas_tecnicas, start=4):
-            letra_col = get_column_letter(j)
-            fila.append(f"={letra_col}{i}*$C{i}/100")
+    # Escribir cada fila con fórmulas en columnas técnicas
+    for row_idx, row in enumerate(df.itertuples(index=False), start=2):
+        materia = getattr(row, "Materia Prima", "")
+        porcentaje = getattr(row, "%", 0)
+        ws.cell(row=row_idx, column=1, value=materia)
+        ws.cell(row=row_idx, column=2, value=porcentaje)
 
-        # subtotal: =B2*C2/100
-        fila.append(f"=B{i}*C{i}/100")
-        ws.append(fila)
+        for col_offset, col in enumerate(columnas_tecnicas, start=3):
+            letra = get_column_letter(col_offset)
+            val = getattr(row, col, 0)
+            ws.cell(row=row_idx, column=col_offset, value=f"={val}*$B{row_idx}/100")
 
-    fila_total = len(df) + 2
+    fila_total = df.shape[0] + 2
 
-    # Total €/kg
-    col_subtotal = len(columnas_final)
-    letra_subtotal = get_column_letter(col_subtotal)
-    ws[f"A{fila_total}"] = "TOTAL €/kg:"
-    ws[f"{letra_subtotal}{fila_total}"] = f"=SUM({letra_subtotal}2:{letra_subtotal}{fila_total - 1})"
-
-    # Totales por cada columna técnica
-    for idx, col in enumerate(columnas_tecnicas, start=4):
-        letra = get_column_letter(idx)
-        ws[f"{letra}{fila_total}"] = f"=SUM({letra}2:{letra}{fila_total - 1})"
+    # Calcular totales con SUMPRODUCT
+    for col_offset, col in enumerate(columnas_tecnicas, start=3):
+        letra = get_column_letter(col_offset)
+        ws.cell(row=fila_total, column=col_offset,
+                value=f"=SUMPRODUCT({letra}2:{letra}{fila_total - 1})")
 
     # Ajustar ancho de columnas
     for col in ws.columns:
@@ -65,5 +46,6 @@ def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     wb.save(output)
     output.seek(0)
     return output
+
 
 
