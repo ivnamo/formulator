@@ -1,47 +1,58 @@
 import pandas as pd
 from openpyxl import Workbook
-from openpyxl.utils.dataframe import dataframe_to_rows
 from io import BytesIO
 
 def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     """
-    Exporta una fórmula a un archivo Excel con fórmulas automáticas de precio y composición.
+    Exporta una fórmula a Excel con subtotal y composición técnica calculada.
 
     Args:
-        df (pd.DataFrame): Fórmula con columnas 'Materia Prima', 'Precio €/kg', '%', y parámetros técnicos.
-        nombre_formula (str): Nombre de la fórmula para identificar el archivo.
+        df (pd.DataFrame): DataFrame con columnas 'Materia Prima', 'Precio €/kg', '%', parámetros técnicos.
+        nombre_formula (str): Nombre para el archivo.
 
     Returns:
-        BytesIO: Archivo Excel listo para descarga.
+        BytesIO: Excel listo para descargar.
     """
     wb = Workbook()
     ws = wb.active
     ws.title = "Fórmula"
 
-    # Columnas del DataFrame + columna subtotal
-    columnas = df.columns.tolist()
-    columnas += ["Subtotal €/kg"]
-    ws.append(columnas)
+    # Columnas base + subtotal + columnas técnicas ajustadas por %
+    columnas_base = ["Materia Prima", "Precio €/kg", "%"]
+    columnas_tecnicas = [col for col in df.columns if col not in columnas_base]
+    columnas_final = columnas_base + columnas_tecnicas + ["Subtotal €/kg"]
+    ws.append(columnas_final)
 
     for i, row in enumerate(df.itertuples(index=False), start=2):
-        values = list(row)
-        formula_subtotal = f"=C{i}*D{i}/100"
-        ws.append(values + [formula_subtotal])
+        fila = [row._asdict().get(col, "") for col in columnas_base]
 
-    # Fila de totales
+        # columnas técnicas con fórmula: =E2*$D2/100
+        for j, col in enumerate(columnas_tecnicas, start=4):
+            letra_col = chr(64 + j)
+            fila.append(f"={letra_col}{i}*$C{i}/100")
+
+        # subtotal: =B2*C2/100
+        fila.append(f"=B{i}*C{i}/100")
+        ws.append(fila)
+
     fila_total = len(df) + 2
-    col_subtotal = columnas.index("Subtotal €/kg") + 1
-    col_letra = chr(64 + col_subtotal)  # A, B, C...
 
+    # Total €/kg (última columna)
+    col_subtotal = len(columnas_final)
+    letra_subtotal = chr(64 + col_subtotal)
     ws[f"A{fila_total}"] = "TOTAL €/kg:"
-    ws[f"{col_letra}{fila_total}"] = f"=SUM({col_letra}2:{col_letra}{fila_total - 1})"
+    ws[f"{letra_subtotal}{fila_total}"] = f"=SUM({letra_subtotal}2:{letra_subtotal}{fila_total - 1})"
+
+    # Totales por parámetros técnicos: SUM(E2:E{n}) o SUMPRODUCT para % ajustadas
+    for idx, col in enumerate(columnas_tecnicas, start=4):
+        letra = chr(64 + idx)
+        ws[f"{letra}{fila_total}"] = f"=SUM({letra}2:{letra}{fila_total - 1})"
 
     # Ajustar ancho de columnas
     for col in ws.columns:
-        max_length = max(len(str(cell.value)) if cell.value else 0 for cell in col)
-        ws.column_dimensions[col[0].column_letter].width = max(max_length + 2, 10)
+        max_len = max(len(str(cell.value)) if cell.value else 0 for cell in col)
+        ws.column_dimensions[col[0].column_letter].width = max(max_len + 2, 10)
 
-    # Guardar a BytesIO
     output = BytesIO()
     wb.save(output)
     output.seek(0)
