@@ -10,6 +10,9 @@ import pandas as pd
 import json
 from utils.supabase_client import supabase
 from utils.formula_resultados import calcular_resultado_formula
+from utils.exportar_formula import exportar_formula_excel
+from io import BytesIO
+
 
 def cargar_formula_por_id(formula_id: str):
     """
@@ -59,3 +62,17 @@ def cargar_formula_por_id(formula_id: str):
             st.info("No hay parámetros significativos en la fórmula.")
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
+
+    # 🔽 Exportar a Excel
+    st.markdown("---")
+    st.subheader("📤 Exportar fórmula a Excel")
+
+    if st.button("⬇️ Exportar esta fórmula"):
+        excel_bytes = exportar_formula_excel(materias_primas, nombre)
+        st.download_button(
+            label="📄 Descargar archivo Excel",
+            data=excel_bytes,
+            file_name=f"{nombre}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
