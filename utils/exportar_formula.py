@@ -7,6 +7,7 @@
 
 import pandas as pd
 from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 from io import BytesIO
 
 def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
@@ -24,7 +25,7 @@ def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     ws = wb.active
     ws.title = "Fórmula"
 
-    # Columnas base + subtotal + columnas técnicas ajustadas por %
+    # Columnas base + técnicas + subtotal
     columnas_base = ["Materia Prima", "Precio €/kg", "%"]
     columnas_tecnicas = [col for col in df.columns if col not in columnas_base]
     columnas_final = columnas_base + columnas_tecnicas + ["Subtotal €/kg"]
@@ -33,9 +34,9 @@ def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     for i, row in enumerate(df.itertuples(index=False), start=2):
         fila = [row._asdict().get(col, "") for col in columnas_base]
 
-        # columnas técnicas con fórmula: =E2*$D2/100
+        # columnas técnicas con fórmula: =valor * $C2 / 100
         for j, col in enumerate(columnas_tecnicas, start=4):
-            letra_col = chr(64 + j)
+            letra_col = get_column_letter(j)
             fila.append(f"={letra_col}{i}*$C{i}/100")
 
         # subtotal: =B2*C2/100
@@ -44,15 +45,15 @@ def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
 
     fila_total = len(df) + 2
 
-    # Total €/kg (última columna)
+    # Total €/kg
     col_subtotal = len(columnas_final)
-    letra_subtotal = chr(64 + col_subtotal)
+    letra_subtotal = get_column_letter(col_subtotal)
     ws[f"A{fila_total}"] = "TOTAL €/kg:"
     ws[f"{letra_subtotal}{fila_total}"] = f"=SUM({letra_subtotal}2:{letra_subtotal}{fila_total - 1})"
 
-    # Totales por parámetros técnicos: SUM(E2:E{n}) o SUMPRODUCT para % ajustadas
+    # Totales por cada columna técnica
     for idx, col in enumerate(columnas_tecnicas, start=4):
-        letra = chr(64 + idx)
+        letra = get_column_letter(idx)
         ws[f"{letra}{fila_total}"] = f"=SUM({letra}2:{letra}{fila_total - 1})"
 
     # Ajustar ancho de columnas
@@ -64,4 +65,5 @@ def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     wb.save(output)
     output.seek(0)
     return output
+
 
