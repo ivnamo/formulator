@@ -16,7 +16,7 @@ def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     ws.title = "Fórmula"
 
     # Mantener solo columnas útiles
-    columnas_base = ["Materia Prima", "Precio €/kg", "%"]
+    columnas_base = ["Materia Prima", "%", "Precio €/kg"]
     columnas_tecnicas = [col for col in df.columns if col not in columnas_base and col != "id"]
     columnas_final = columnas_base + columnas_tecnicas
 
