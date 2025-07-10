@@ -17,7 +17,7 @@ def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     for col_idx, col_name in enumerate(columnas_final, start=1):
         ws.cell(row=1, column=col_idx, value=col_name)
 
-    # Escribir datos sin totales ni fórmulas
+    # Escribir datos
     for row_idx, row in enumerate(df[columnas_final].itertuples(index=False), start=2):
         for col_idx, value in enumerate(row, start=1):
             ws.cell(row=row_idx, column=col_idx, value=value)
@@ -26,8 +26,8 @@ def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     start_row = 2
     end_row = start_row + len(df) - 1
 
-    # Agregar fila con fórmulas
-    total_row = end_row + 1
+    # Fila en blanco + fila de totales
+    total_row = end_row + 2
     ws.cell(row=total_row, column=1, value="TOTAL")
 
     col_pct_idx = columnas_final.index("%") + 1
