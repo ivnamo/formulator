@@ -1,10 +1,3 @@
-# ------------------------------------------------------------------------------
-# FORMULATOR – Uso exclusivo de Iván Navarro
-# Todos los derechos reservados © 2025
-# Este archivo forma parte de un software no libre y no está autorizado su uso
-# ni distribución sin consentimiento expreso y por escrito del autor.
-# ------------------------------------------------------------------------------
-
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -20,19 +13,32 @@ def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     columnas_tecnicas = [col for col in df.columns if col not in columnas_base and col != "id"]
     columnas_final = columnas_base + columnas_tecnicas
 
-    # Calcular valores ajustados al %
-    df_export = df[columnas_base].copy()
-    for col in columnas_tecnicas:
-        df_export[col] = df[col] * df["%"] / 100
-
     # Escribir encabezados
     for col_idx, col_name in enumerate(columnas_final, start=1):
         ws.cell(row=1, column=col_idx, value=col_name)
 
     # Escribir datos sin totales ni fórmulas
-    for row_idx, row in enumerate(df_export.itertuples(index=False), start=2):
+    for row_idx, row in enumerate(df[columnas_final].itertuples(index=False), start=2):
         for col_idx, value in enumerate(row, start=1):
             ws.cell(row=row_idx, column=col_idx, value=value)
+
+    # Calcular rango de filas
+    start_row = 2
+    end_row = start_row + len(df) - 1
+
+    # Agregar fila con fórmulas
+    total_row = end_row + 1
+    ws.cell(row=total_row, column=1, value="TOTAL")
+
+    col_pct_idx = columnas_final.index("%") + 1
+    pct_col_letter = get_column_letter(col_pct_idx)
+    rango_pct = f"${pct_col_letter}${start_row}:${pct_col_letter}${end_row}"
+
+    for col_name in columnas_tecnicas:
+        col_idx = columnas_final.index(col_name) + 1
+        col_letter = get_column_letter(col_idx)
+        formula = f"=SUMPRODUCT({rango_pct},{col_letter}{start_row}:{col_letter}{end_row})/100"
+        ws.cell(row=total_row, column=col_idx, value=formula)
 
     # Ajustar ancho de columnas
     for col in ws.columns:
