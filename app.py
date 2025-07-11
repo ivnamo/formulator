@@ -29,7 +29,7 @@ def login():
             if resp.user:
                 st.session_state.logged_in = True
                 st.session_state.user_email = email
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Credenciales incorrectas.")
         except Exception as e:
@@ -66,7 +66,7 @@ def main():
         if st.button("🔓 Cerrar sesión"):
             for k in ["logged_in", "user_email"]:
                 st.session_state.pop(k, None)
-            st.experimental_rerun()
+            st.rerun()
 
         st.markdown("""
         **Desarrollado por:** Iván Navarro  
@@ -104,3 +104,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
