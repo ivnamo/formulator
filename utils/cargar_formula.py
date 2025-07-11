@@ -14,6 +14,7 @@ from utils.formula_resultados import calcular_resultado_formula
 from utils.exportar_formula import exportar_formula_excel
 from utils.generar_etiqueta import generar_etiqueta
 from utils.generar_qr import generar_qr
+from streamlit_javascript import st_javascript  # ✅ para URL dinámica
 
 
 def cargar_formula_por_id(formula_id: str):
@@ -79,9 +80,11 @@ def cargar_formula_por_id(formula_id: str):
             )
 
         # 🏷️ Generar etiqueta
+        st.markdown("---")
         st.subheader("🏷️ Generar etiqueta PDF 5×3 cm")
         if st.button("Generar etiqueta PDF"):
-            url_formula = f"https://formulator-pruebas2.streamlit.app/?formula_id={formula_id}"
+            host_url = st_javascript("window.location.origin")
+            url_formula = f"{host_url}/?formula_id={formula_id}"
             qr_img = generar_qr(url_formula)
             etiqueta_pdf = generar_etiqueta(nombre, fecha, qr_img)
             st.download_button(
@@ -94,4 +97,3 @@ def cargar_formula_por_id(formula_id: str):
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
         return
-
