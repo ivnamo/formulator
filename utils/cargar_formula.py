@@ -42,7 +42,7 @@ def cargar_formula_por_id(formula_id: str):
         st.markdown(f"### 🧪 **{nombre}**")
         st.markdown(f"**💰 Precio por kg:** {precio:.2f} €")
 
-        # 🔃 Reordenar columnas: Materia Prima, %, Precio €/kg, luego parámetros técnicos
+        # 🔃 Reordenar columnas
         columnas_base = ["Materia Prima", "%", "Precio €/kg"]
         columnas_tecnicas = [
             col for col in materias_primas.columns
@@ -51,14 +51,13 @@ def cargar_formula_por_id(formula_id: str):
         orden_columnas = columnas_base + columnas_tecnicas
         materias_primas = materias_primas[orden_columnas]
 
-        # 👁 Vista previa con % renombrado para pantalla
+        # 👁 Vista previa
         materias_vista = materias_primas.rename(columns={"%": "Porcentaje"}).copy()
         st.markdown(materias_vista.to_html(index=False), unsafe_allow_html=True)
 
-        # 📊 Cálculo de composición
-        precio_calc, composicion = calcular_resultado_formula(materias_primas, columnas_tecnicas)
-
+        # 📊 Composición
         st.markdown("#### 📊 Composición estimada")
+        precio_calc, composicion = calcular_resultado_formula(materias_primas, columnas_tecnicas)
         composicion = composicion[composicion["Cantidad %"] > 0]
         if not composicion.empty:
             composicion_formateada = composicion.reset_index()
@@ -79,12 +78,17 @@ def cargar_formula_por_id(formula_id: str):
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-        # 🏷️ Generar etiqueta
+        # 🏷️ Generar etiqueta PDF
         st.markdown("---")
         st.subheader("🏷️ Generar etiqueta PDF 5×3 cm")
+
+        # ✅ Obtener host solo una vez para evitar parpadeos
+        if "host_url" not in st.session_state:
+            st.session_state.host_url = st_javascript("window.location.origin")
+
+        url_formula = f"{st.session_state.host_url}/?formula_id={formula_id}"
+
         if st.button("Generar etiqueta PDF"):
-            host_url = st_javascript("window.location.origin")
-            url_formula = f"{host_url}/?formula_id={formula_id}"
             qr_img = generar_qr(url_formula)
             etiqueta_pdf = generar_etiqueta(nombre, fecha, qr_img)
             st.download_button(
@@ -96,4 +100,4 @@ def cargar_formula_por_id(formula_id: str):
 
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
-        return
+
