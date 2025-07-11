@@ -70,6 +70,9 @@ def flujo_crear_formula():
         st.markdown("---")
         st.subheader("📂 Guardar fórmula")
 
+        # Captura anticipada del host
+        host_url = st_javascript("window.location.origin") or "https://formulator-pruebas2.streamlit.app"
+
         nombre_formula = st.text_input("Nombre de la fórmula", placeholder="Ej. Bioestimulante Algas v1", key="nombre_crear")
         if st.button("Guardar fórmula"):
             if not nombre_formula.strip():
@@ -86,8 +89,6 @@ def flujo_crear_formula():
 
                 precio, _ = calcular_resultado_formula(df_editado, columnas_filtradas)
                 formula_id = guardar_formula(df_editado, nombre_formula.strip(), precio)
-                url_formula = f"https://formulator-pruebas2.streamlit.app/?formula_id={formula_id}"
-                host_url = st_javascript("window.location.origin")
                 url_formula = f"{host_url}/?formula_id={formula_id}"
 
                 qr_img = generar_qr(url_formula)
@@ -106,3 +107,4 @@ def flujo_crear_formula():
                     file_name=f"{nombre_formula.strip()}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
+
