@@ -5,48 +5,34 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
-from PIL import Image, ImageDraw, ImageFont
+from reportlab.lib.pagesizes import cm
+from reportlab.pdfgen import canvas
 from io import BytesIO
+from PIL import Image
+
 
 def generar_etiqueta(nombre: str, fecha: str, qr_img: Image.Image) -> BytesIO:
     """
-    Genera una etiqueta PDF de 5x3 cm con nombre, fecha y QR en alta resolución.
-
-    Args:
-        nombre (str): Nombre de la fórmula.
-        fecha (str): Fecha de creación (YYYY-MM-DD).
-        qr_img (Image.Image): Imagen QR ya generada.
-
-    Returns:
-        BytesIO: Etiqueta en formato PDF lista para descargar.
+    Genera una etiqueta PDF de 5x3 cm con nombre, fecha y QR usando ReportLab.
     """
-    # 🔍 Tamaño etiqueta en cm → px a 600 DPI
-    dpi = 600
-    cm_to_inches = 0.393701
-    width_px = int(5 * cm_to_inches * dpi)   # ~1181 px
-    height_px = int(3 * cm_to_inches * dpi)  # ~709 px
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=(5 * cm, 3 * cm))  # Tamaño exacto en cm
 
-    # 🎨 Crear imagen blanca
-    etiqueta = Image.new("RGB", (width_px, height_px), "white")
-    draw = ImageDraw.Draw(etiqueta)
+    # Texto (posición desde esquina inferior izquierda)
+    c.setFont("Helvetica-Bold", 8)
+    c.drawString(10, 75, f"Nombre: {nombre}")
+    c.drawString(10, 60, f"Fecha: {fecha}")
 
-    # 🔤 Fuente
-    try:
-        font = ImageFont.truetype("arial.ttf", size=48)
-    except:
-        font = ImageFont.load_default()
+    # Guardar QR en disco temporal o buffer
+    qr_buffer = BytesIO()
+    qr_img.save(qr_buffer, format="PNG")
+    qr_buffer.seek(0)
 
-    # 🖋️ Escribir nombre y fecha
-    draw.text((50, 50), f"Nombre: {nombre}", font=font, fill="black")
-    draw.text((50, 130), f"Fecha: {fecha}", font=font, fill="black")
+    # Insertar QR de 2x2 cm (aprox. 56.7 puntos)
+    c.drawImage(qr_buffer, x=5 * cm - 60, y=5, width=55, height=55, mask='auto')
 
-    # 🧩 QR: tamaño y ubicación
-    qr_size = 300
-    qr_img = qr_img.resize((qr_size, qr_size), resample=Image.BICUBIC)
-    etiqueta.paste(qr_img, (width_px - qr_size - 50, height_px - qr_size - 50))
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer
 
-    # 💾 Guardar como PDF
-    output = BytesIO()
-    etiqueta.save(output, format="PDF", resolution=dpi)
-    output.seek(0)
-    return output
