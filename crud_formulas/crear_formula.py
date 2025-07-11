@@ -71,7 +71,7 @@ def flujo_crear_formula():
         st.subheader("📂 Guardar fórmula")
 
         # Captura anticipada del host
-        host_url = st_javascript("window.location.origin") or "https://formulator-pruebas2.streamlit.app"
+        host_url = st_javascript("window.location.origin") 
 
         nombre_formula = st.text_input("Nombre de la fórmula", placeholder="Ej. Bioestimulante Algas v1", key="nombre_crear")
         if st.button("Guardar fórmula"):
