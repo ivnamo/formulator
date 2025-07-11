@@ -8,6 +8,7 @@ from utils.formula_resultados import calcular_resultado_formula
 from utils.guardar_formula import guardar_formula
 from utils.generar_qr import generar_qr
 from utils.exportar_formula import exportar_formula_excel
+from streamlit_javascript import st_javascript
 
 def flujo_crear_formula():
     """Interfaz para crear y guardar nuevas fórmulas."""
@@ -86,6 +87,9 @@ def flujo_crear_formula():
                 precio, _ = calcular_resultado_formula(df_editado, columnas_filtradas)
                 formula_id = guardar_formula(df_editado, nombre_formula.strip(), precio)
                 url_formula = f"https://formulator-pruebas2.streamlit.app/?formula_id={formula_id}"
+                host_url = st_javascript("window.location.origin")
+                url_formula = f"{host_url}/?formula_id={formula_id}"
+
                 qr_img = generar_qr(url_formula)
 
                 st.success("✅ Fórmula guardada correctamente.")
