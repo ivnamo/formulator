@@ -82,11 +82,9 @@ def cargar_formula_por_id(formula_id: str):
         st.markdown("---")
         st.subheader("🏷️ Generar etiqueta PDF 5×3 cm")
 
-        # ✅ Obtener host solo una vez para evitar parpadeos
-        if "host_url" not in st.session_state:
-            st.session_state.host_url = st_javascript("window.location.origin")
-
-        url_formula = f"{st.session_state.host_url}/?formula_id={formula_id}"
+        # ✅ Captura segura del host actual con fallback
+        host_url = st_javascript("window.location.origin")
+        url_formula = f"{host_url}/?formula_id={formula_id}"
 
         if st.button("Generar etiqueta PDF"):
             qr_img = generar_qr(url_formula)
@@ -100,4 +98,5 @@ def cargar_formula_por_id(formula_id: str):
 
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
+
 
