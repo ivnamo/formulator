@@ -8,10 +8,12 @@
 import streamlit as st
 import pandas as pd
 import json
+from io import BytesIO
 from utils.supabase_client import supabase
 from utils.formula_resultados import calcular_resultado_formula
 from utils.exportar_formula import exportar_formula_excel
-from io import BytesIO
+from utils.generar_etiqueta import generar_etiqueta
+from utils.generar_qr import generar_qr
 
 
 def cargar_formula_por_id(formula_id: str):
@@ -33,6 +35,7 @@ def cargar_formula_por_id(formula_id: str):
 
         nombre = data["nombre"]
         precio = data["precio_total"]
+        fecha = data.get("fecha_creacion", "")[:10]
         materias_primas = pd.DataFrame(json.loads(data["materias_primas"]))
 
         st.markdown(f"### 🧪 **{nombre}**")
@@ -63,19 +66,32 @@ def cargar_formula_por_id(formula_id: str):
         else:
             st.info("No hay parámetros significativos en la fórmula.")
 
+        # 📤 Exportar a Excel
+        st.markdown("---")
+        st.subheader("📤 Exportar esta fórmula")
+        if st.button("⬇️ Exportar a Excel"):
+            excel_bytes = exportar_formula_excel(materias_primas, nombre)
+            st.download_button(
+                label="📄 Descargar archivo Excel",
+                data=excel_bytes,
+                file_name=f"{nombre}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+
+        # 🏷️ Generar etiqueta
+        st.subheader("🏷️ Generar etiqueta PDF 5×3 cm")
+        if st.button("Generar etiqueta PDF"):
+            url_formula = f"https://formulator-pruebas2.streamlit.app/?formula_id={formula_id}"
+            qr_img = generar_qr(url_formula)
+            etiqueta_pdf = generar_etiqueta(nombre, fecha, qr_img)
+            st.download_button(
+                label="📥 Descargar etiqueta PDF",
+                data=etiqueta_pdf,
+                file_name=f"Etiqueta_{nombre}.pdf",
+                mime="application/pdf"
+            )
+
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
         return
 
-    # 📤 Exportar a Excel (sin totales ni fórmulas)
-    st.markdown("---")
-    st.subheader("📤 Exportar esta fórmula")
-
-    if st.button("⬇️ Exportar a Excel"):
-        excel_bytes = exportar_formula_excel(materias_primas, nombre)
-        st.download_button(
-            label="📄 Descargar archivo Excel",
-            data=excel_bytes,
-            file_name=f"{nombre}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
