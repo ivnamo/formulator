@@ -6,6 +6,7 @@
 # ------------------------------------------------------------------------------
 
 import streamlit as st
+from utils.supabase_client import supabase
 from crud_mp.create_materia_prima import crear_materia_prima
 from crud_mp.update_materia_prima import actualizar_materia_prima
 from crud_mp.delete_materia_prima import eliminar_materia_prima
@@ -15,11 +16,34 @@ from crud_formulas.update_formula import actualizar_formula
 from crud_formulas.delete_formula import eliminar_formula
 from utils.cargar_formula import cargar_formula_por_id
 
+# 🔐 Login simple usando Supabase email/password
+def login():
+    st.set_page_config(layout="centered")
+    st.title("🔐 Iniciar sesión")
+
+    email = st.text_input("Email")
+    password = st.text_input("Contraseña", type="password")
+    if st.button("Entrar"):
+        try:
+            resp = supabase.auth.sign_in_with_password({"email": email, "password": password})
+            if resp.user:
+                st.session_state.logged_in = True
+                st.session_state.user_email = email
+                st.experimental_rerun()
+            else:
+                st.error("Credenciales incorrectas.")
+        except Exception as e:
+            st.error(f"Error de autenticación: {e}")
 
 def main():
     st.set_page_config(layout="wide")
 
-    # 📥 Cargar fórmula desde la URL si se ha accedido con ?formula_id=...
+    # 🔐 Requiere login previo
+    if "logged_in" not in st.session_state or not st.session_state.logged_in:
+        login()
+        return
+
+    # 📥 Cargar fórmula desde la URL si se accede con ?formula_id=...
     params = st.query_params
     if "formula_id" in params:
         cargar_formula_por_id(params["formula_id"])
@@ -38,6 +62,12 @@ def main():
         menu = st.radio("Navegación", ["Formulas", "Materias Primas"], label_visibility="collapsed")
 
         st.markdown("---")
+        st.markdown(f"**Sesión iniciada como:** {st.session_state.get('user_email', '')}")
+        if st.button("🔓 Cerrar sesión"):
+            for k in ["logged_in", "user_email"]:
+                st.session_state.pop(k, None)
+            st.experimental_rerun()
+
         st.markdown("""
         **Desarrollado por:** Iván Navarro  
         **Versión:** 1.0.0  
@@ -74,4 +104,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
