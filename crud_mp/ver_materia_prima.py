@@ -21,15 +21,12 @@ def ver_materia_prima():
         st.warning("No hay materias primas registradas.")
         return
 
-    df_filtrado = aplicar_filtros_materias_primas(df)
-    df_filtrado = df_filtrado.copy()
-
-    # Inicializar lista de seleccionadas si no existe
+    # Inicializar lista persistente si no existe
     if "mp_seleccionadas" not in st.session_state:
         st.session_state["mp_seleccionadas"] = []
 
-    # Crear columna de selección basada en session_state
-    df_filtrado[":Seleccionar"] = df_filtrado["Materia Prima"].isin(st.session_state["mp_seleccionadas"])
+    df_filtrado = aplicar_filtros_materias_primas(df).copy()
+    df_filtrado[":Seleccionar"] = False
 
     st.markdown("### Resultados filtrados")
     seleccion_df = st.data_editor(
@@ -41,15 +38,33 @@ def ver_materia_prima():
         disabled=[col for col in df_filtrado.columns if col != ":Seleccionar"]
     )
 
-    # Actualizar selección en session_state
-    seleccionadas = seleccion_df.loc[seleccion_df[":Seleccionar"], "Materia Prima"].dropna().tolist()
-    st.session_state["mp_seleccionadas"] = seleccionadas
+    seleccionadas_temp = seleccion_df.loc[seleccion_df[":Seleccionar"], "Materia Prima"].dropna().tolist()
 
-    if seleccionadas:
+    if seleccionadas_temp:
+        if st.button("➕ Añadir seleccionadas a la lista"):
+            nuevas = [mp for mp in seleccionadas_temp if mp not in st.session_state["mp_seleccionadas"]]
+            st.session_state["mp_seleccionadas"].extend(nuevas)
+            st.rerun()
+
+    # Mostrar lista persistente de seleccionadas
+    if st.session_state["mp_seleccionadas"]:
+        st.markdown("### 🧾 Lista de materias primas seleccionadas")
+        st.write(st.session_state["mp_seleccionadas"])
+
+        eliminar = st.multiselect(
+            "❌ Quitar de la lista",
+            options=st.session_state["mp_seleccionadas"],
+            key="mp_a_eliminar"
+        )
+
+        if eliminar:
+            if st.button("🗑️ Quitar seleccionadas"):
+                st.session_state["mp_seleccionadas"] = [mp for mp in st.session_state["mp_seleccionadas"] if mp not in eliminar]
+                st.rerun()
+
         if st.button("🧪 Usar estas materias primas en nueva fórmula"):
-            st.session_state["mp_crear"] = seleccionadas
+            st.session_state["mp_crear"] = st.session_state["mp_seleccionadas"]
             st.session_state["page"] = "crear_formula"
             st.rerun()
     else:
-        st.info("Marca al menos una materia prima en la tabla para continuar.")
-
+        st.info("Añade materias primas a la lista para poder continuar.")
