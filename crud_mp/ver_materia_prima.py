@@ -49,6 +49,12 @@ def ver_materia_prima():
     else:
         seleccionadas_temp = []
 
+    # Logs de depuración 🔍
+    st.markdown("#### 🔍 DEBUG")
+    st.write("📌 Materias seleccionadas en esta sesión:", seleccionadas_temp)
+    st.write("📦 mp_temp antes:", st.session_state["mp_temp"])
+    st.write("📦 mp_seleccionadas (persistente):", st.session_state["mp_seleccionadas"])
+
     # Actualizar sesión temporal
     st.session_state["mp_temp"] = seleccionadas_temp
 
@@ -86,4 +92,3 @@ def ver_materia_prima():
             st.rerun()
     else:
         st.info("Añade materias primas a la lista para poder continuar.")
-
