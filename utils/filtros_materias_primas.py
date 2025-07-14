@@ -20,9 +20,12 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
             st.rerun()
 
         if st.session_state.get("reset_filtros_mp"):
-            st.session_state.clear()
+            claves_a_borrar = [k for k in st.session_state.keys() if k.startswith(("col_filtro_", "op_filtro_", "val_filtro_", "slider_", "mp_crear", "familias_crear"))]
+            for k in claves_a_borrar:
+                del st.session_state[k]
             st.session_state["reset_filtros_mp"] = False
             st.rerun()
+
 
         nombre_filtro = st.text_input("Buscar por nombre")
         precio_min, precio_max = st.slider(
