@@ -16,7 +16,6 @@ from utils.guardar_formula import guardar_formula
 from utils.generar_qr import generar_qr
 from utils.exportar_formula import exportar_formula_excel
 from streamlit_javascript import st_javascript
-from utils.filtros_materias_primas import aplicar_filtros_materias_primas
 
 def flujo_crear_formula():
     """Interfaz para crear y guardar nuevas fórmulas."""
@@ -28,16 +27,9 @@ def flujo_crear_formula():
         st.error("La columna 'Materia Prima' no está disponible en los datos.")
         return
 
-    df_filtrado = aplicar_filtros_materias_primas(df)
-
-    materias_filtradas = df_filtrado["Materia Prima"].dropna().tolist()
-    seleccionadas_previas = st.session_state.get("mp_crear", [])
-    opciones_completas = list(set(materias_filtradas + seleccionadas_previas))
-
     seleccionadas = st.multiselect(
-        "Selecciona las materias primas para tu fórmula",
-        options=opciones_completas,
-        default=seleccionadas_previas,
+        "Busca y selecciona las materias primas",
+        options=df["Materia Prima"].dropna().tolist(),
         help="Puedes escribir para buscar por nombre",
         key="mp_crear",
     )
