@@ -21,12 +21,14 @@ def ver_materia_prima():
         st.warning("No hay materias primas registradas.")
         return
 
-    # Inicializar lista persistente si no existe
+    # Inicializar listas persistentes
     if "mp_seleccionadas" not in st.session_state:
         st.session_state["mp_seleccionadas"] = []
+    if "mp_temp" not in st.session_state:
+        st.session_state["mp_temp"] = []
 
     df_filtrado = aplicar_filtros_materias_primas(df).copy()
-    df_filtrado[":Seleccionar"] = False
+    df_filtrado[":Seleccionar"] = df_filtrado["Materia Prima"].isin(st.session_state["mp_temp"])
 
     st.markdown("### Resultados filtrados")
     seleccion_df = st.data_editor(
@@ -34,21 +36,25 @@ def ver_materia_prima():
         use_container_width=True,
         hide_index=True,
         num_rows="dynamic",
+        key="tabla_editor_mp",
         column_config={":Seleccionar": st.column_config.CheckboxColumn("✅")},
         disabled=[col for col in df_filtrado.columns if col != ":Seleccionar"]
     )
 
-    seleccionadas_temp = seleccion_df.loc[seleccion_df[":Seleccionar"], "Materia Prima"].dropna().tolist()
+    # Actualizar temporal
+    st.session_state["mp_temp"] = seleccion_df.loc[seleccion_df[":Seleccionar"], "Materia Prima"].dropna().tolist()
 
-    if seleccionadas_temp:
+    if st.session_state["mp_temp"]:
         if st.button("➕ Añadir seleccionadas a la lista"):
-            nuevas = [mp for mp in seleccionadas_temp if mp not in st.session_state["mp_seleccionadas"]]
+            nuevas = [mp for mp in st.session_state["mp_temp"] if mp not in st.session_state["mp_seleccionadas"]]
             st.session_state["mp_seleccionadas"].extend(nuevas)
+            st.session_state["mp_temp"] = []
             st.rerun()
 
     # Mostrar lista persistente de seleccionadas
+    st.markdown("### 🧾 Lista de materias primas seleccionadas")
     if st.session_state["mp_seleccionadas"]:
-        st.markdown("### 🧾 Lista de materias primas seleccionadas")
+        st.write(f"{len(st.session_state['mp_seleccionadas'])} seleccionadas:")
         st.write(st.session_state["mp_seleccionadas"])
 
         eliminar = st.multiselect(
