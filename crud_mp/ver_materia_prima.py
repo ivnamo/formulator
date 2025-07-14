@@ -28,6 +28,8 @@ def ver_materia_prima():
         st.session_state["mp_temp"] = []
 
     df_filtrado = aplicar_filtros_materias_primas(df).copy()
+
+    # Asegurar columna booleana de selección
     df_filtrado[":Seleccionar"] = df_filtrado["Materia Prima"].isin(st.session_state["mp_temp"])
 
     st.markdown("### Resultados filtrados")
@@ -41,15 +43,16 @@ def ver_materia_prima():
         disabled=[col for col in df_filtrado.columns if col != ":Seleccionar"]
     )
 
-    # Extraer selección actual desde la tabla editada
+    # ✅ Extraer los marcados del DataFrame editado
     if ":Seleccionar" in seleccion_df.columns:
-        seleccionadas_temp = seleccion_df[seleccion_df[":Seleccionar"] == True]["Materia Prima"].dropna().tolist()
+        seleccionadas_temp = seleccion_df.loc[seleccion_df[":Seleccionar"], "Materia Prima"].dropna().tolist()
     else:
         seleccionadas_temp = []
 
+    # Actualizar sesión temporal
     st.session_state["mp_temp"] = seleccionadas_temp
 
-    # Mostrar botón para añadir a la lista
+    # Mostrar botón para añadir a la lista persistente
     st.markdown("---")
     st.write(f"🔘 Marcadas actualmente: {len(st.session_state['mp_temp'])} materia(s) prima(s)")
     if st.button("➕ Añadir seleccionadas a la lista"):
@@ -72,7 +75,9 @@ def ver_materia_prima():
 
         if eliminar:
             if st.button("🗑️ Quitar seleccionadas"):
-                st.session_state["mp_seleccionadas"] = [mp for mp in st.session_state["mp_seleccionadas"] if mp not in eliminar]
+                st.session_state["mp_seleccionadas"] = [
+                    mp for mp in st.session_state["mp_seleccionadas"] if mp not in eliminar
+                ]
                 st.rerun()
 
         if st.button("🧪 Usar estas materias primas en nueva fórmula"):
