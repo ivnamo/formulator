@@ -15,6 +15,7 @@ from utils.formula_resultados import calcular_resultado_formula
 from utils.guardar_formula import guardar_formula
 from utils.generar_qr import generar_qr
 from utils.exportar_formula import exportar_formula_excel
+from utils.optimizador_simplex import optimizar_simplex
 from streamlit_javascript import st_javascript
 
 def flujo_crear_formula():
@@ -61,6 +62,29 @@ def flujo_crear_formula():
     else:
         columnas_filtradas = columnas
 
+    # ⚡️ OPTIMIZADOR SIMPLEX
+    st.markdown("### ⚙️ Optimización Simplex")
+
+    with st.expander("🫮 Optimizar fórmula automáticamente (Simplex)"):
+        if columnas_filtradas:
+            col1, col2 = st.columns(2)
+            param = col1.selectbox("Parámetro técnico a cumplir", columnas_filtradas)
+            minimo = col2.number_input("Valor mínimo requerido (%)", min_value=0.0, value=1.0, step=0.1)
+
+            if st.button("🔧 Ejecutar optimización Simplex"):
+                try:
+                    restric = {param: minimo}
+                    df_opt, costo = optimizar_simplex(df_editado, columnas_filtradas, restricciones_min=restric)
+                    st.success(f"Fórmula optimizada. Coste total: {costo:.2f} €/kg")
+                    st.dataframe(df_opt[["Materia Prima", "%", "Precio €/kg"] + columnas_filtradas])
+                    df_editado = df_opt
+                    total_pct = df_editado["%"].sum()
+                except Exception as e:
+                    st.error(f"❌ Error durante la optimización: {e}")
+        else:
+            st.info("Selecciona al menos una familia con parámetros técnicos para optimizar.")
+
+    # RESULTADOS
     if abs(total_pct - 100) > 0.01:
         st.warning("⚠️ La suma de los porcentajes debe ser 100% para calcular.")
         forzar = st.checkbox(
@@ -77,7 +101,6 @@ def flujo_crear_formula():
         st.markdown("---")
         st.subheader("📂 Guardar fórmula")
 
-        # Captura anticipada del host
         host_url = st_javascript("window.location.origin") 
 
         nombre_formula = st.text_input("Nombre de la fórmula", placeholder="Ej. Bioestimulante Algas v1", key="nombre_crear")
@@ -85,7 +108,6 @@ def flujo_crear_formula():
             if not nombre_formula.strip():
                 st.warning("Debes ingresar un nombre para guardar la fórmula.")
             else:
-                # ✅ Reordenar columnas antes de guardar/exportar
                 columnas_base = ["Materia Prima", "%", "Precio €/kg"]
                 columnas_tecnicas = [
                     col for col in df_editado.columns
@@ -104,7 +126,6 @@ def flujo_crear_formula():
                 st.image(qr_img, caption="Código QR para esta fórmula", use_container_width=False)
                 st.code(url_formula, language="markdown")
 
-                # ✅ Exportar a Excel
                 st.markdown("---")
                 st.subheader("📤 Exportar fórmula a Excel")
                 excel_bytes = exportar_formula_excel(df_editado, nombre_formula.strip())
