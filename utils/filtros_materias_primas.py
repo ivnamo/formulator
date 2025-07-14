@@ -52,7 +52,8 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
                 col for fam in familias_sel for col in familias[fam] if col in df_filtrado.columns
             ]
             if columnas_familia:
-                df_filtrado = df_filtrado[df_filtrado[columnas_familia].notna().any(axis=1)]
+                suma_familia = df_filtrado[columnas_familia].fillna(0).sum(axis=1)
+                df_filtrado = df_filtrado[suma_familia > 0]
 
         for col, op, val in filtros_aplicados:
             if col in df_filtrado.columns:
