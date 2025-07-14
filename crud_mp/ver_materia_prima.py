@@ -5,7 +5,7 @@ from utils.filtros_materias_primas import aplicar_filtros_materias_primas
 
 
 def ver_materia_prima():
-    st.subheader("🔎 Materias primas (vista tabla)")
+    st.subheader("🔎 Materias primas (estilo tabla interactiva)")
 
     response = supabase.table("materias_primas").select("*").execute()
     df = pd.DataFrame(response.data)
@@ -21,31 +21,50 @@ def ver_materia_prima():
         st.session_state["mp_checkbox_estado"] = {}
 
     df_filtrado = aplicar_filtros_materias_primas(df).copy()
-    columnas_tabla = ["Materia Prima", "Precio €/kg", "Ntotal", "K2O", "CaO", "MgO"]  # puedes ajustar
-    df_tabla = df_filtrado[columnas_tabla].fillna("–")
+    columnas_mostrar = ["Materia Prima", "Precio €/kg", "Ntotal", "K2O", "CaO"]
 
-    st.markdown("### 🧾 Tabla con selección")
+    st.markdown("### 📋 Selección de materias primas")
 
-    with st.form("tabla_materias"):
-        tabla_data = []
-        for i, row in df_tabla.iterrows():
-            nombre = row["Materia Prima"]
-            key = f"chk_row_{nombre}"
-            marcado = st.checkbox("", key=key)
-            st.session_state["mp_checkbox_estado"][nombre] = marcado
-            tabla_data.append([marcado] + list(row.values))
+    # Cabecera de tabla
+    cols = st.columns([0.1, 0.3, 0.2, 0.1, 0.1, 0.1])
+    cols[0].markdown("**✅**")
+    for i, col in enumerate(columnas_mostrar):
+        cols[i + 1].markdown(f"**{col}**")
 
-        df_visual = pd.DataFrame(tabla_data, columns=["✅"] + list(df_tabla.columns))
-        st.dataframe(df_visual, use_container_width=True)
+    # Filas de datos con checkbox
+    for i, row in df_filtrado.iterrows():
+        nombre = row["Materia Prima"]
+        key = f"chk_{nombre}"
 
-        if st.form_submit_button("➕ Añadir seleccionadas"):
-            seleccionadas = [mp for mp, sel in st.session_state["mp_checkbox_estado"].items() if sel]
-            nuevas = [mp for mp in seleccionadas if mp not in st.session_state["mp_seleccionadas"]]
-            st.session_state["mp_seleccionadas"].extend(nuevas)
-            for mp in nuevas:
-                st.session_state["mp_checkbox_estado"][mp] = False
-            st.success(f"{len(nuevas)} añadidas a la lista")
-            st.rerun()
+        marcado = st.session_state["mp_checkbox_estado"].get(nombre, False)
+        cols = st.columns([0.1, 0.3, 0.2, 0.1, 0.1, 0.1])
+        marcado = cols[0].checkbox("", value=marcado, key=key)
+        st.session_state["mp_checkbox_estado"][nombre] = marcado
+
+        for j, col in enumerate(columnas_mostrar):
+            valor = row.get(col, "–")
+            if pd.isna(valor):
+                valor = "–"
+            cols[j + 1].write(valor)
+
+    # Obtener los seleccionados
+    seleccionadas_temp = [
+        mp for mp, marcado in st.session_state["mp_checkbox_estado"].items() if marcado
+    ]
+
+    # DEBUG
+    st.markdown("### 🔍 DEBUG")
+    st.write("📌 Marcadas ahora:", seleccionadas_temp)
+    st.write("📦 Lista persistente:", st.session_state["mp_seleccionadas"])
+
+    # Botón para añadir
+    if st.button("➕ Añadir seleccionadas"):
+        nuevas = [mp for mp in seleccionadas_temp if mp not in st.session_state["mp_seleccionadas"]]
+        st.session_state["mp_seleccionadas"].extend(nuevas)
+        st.success(f"✅ Añadidas {len(nuevas)} materias primas.")
+        for mp in nuevas:
+            st.session_state["mp_checkbox_estado"][mp] = False
+        st.rerun()
 
     st.markdown("### 📌 Lista acumulada")
     if st.session_state["mp_seleccionadas"]:
@@ -58,5 +77,3 @@ def ver_materia_prima():
             st.rerun()
     else:
         st.info("No hay materias primas en la lista.")
-
-
