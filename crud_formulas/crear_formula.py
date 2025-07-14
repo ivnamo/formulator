@@ -5,7 +5,6 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
-
 import streamlit as st
 import pandas as pd
 from utils.supabase_client import supabase
@@ -58,24 +57,48 @@ def flujo_crear_formula():
     st.markdown("### ⚙️ Optimización Simplex")
 
     with st.expander("🧮 Optimizar fórmula automáticamente (Simplex)"):
-        if columnas_filtradas:
-            col1, col2 = st.columns(2)
-            param = col1.selectbox("Parámetro técnico a cumplir", columnas_filtradas)
-            minimo = col2.number_input("Valor mínimo requerido (%)", min_value=0.0, value=1.0, step=0.1)
+        df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
 
-            if st.button("🔧 Ejecutar optimización Simplex"):
-                try:
-                    restric = {param: minimo}
-                    df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
-                    df_opt, costo = optimizar_simplex(df_filtrado, columnas_filtradas, restricciones_min=restric)
-                    st.success(f"Fórmula optimizada. Coste total: {costo:.2f} €/kg")
-                    st.dataframe(df_opt[["Materia Prima", "%", "Precio €/kg"] + columnas_filtradas])
-                    df_editado = df_opt.copy()
-                    total_pct = df_editado["%"].sum()
-                except Exception as e:
-                    st.error(f"❌ Error durante la optimización: {e}")
-        else:
-            st.info("Selecciona al menos una familia con parámetros técnicos para optimizar.")
+        columnas_param_opt = [col for col in columnas if col in df_filtrado.columns and df_filtrado[col].fillna(0).gt(0).any()]
+
+        columnas_restricciones = st.multiselect(
+            "Selecciona parámetros técnicos a restringir",
+            options=columnas_param_opt,
+            default=[],
+            key="parametros_restringidos"
+        )
+
+        restricciones = {}
+        for col in columnas_restricciones:
+            valores_columna = df_filtrado[col].fillna(0)
+            min_val = float(valores_columna.min())
+            max_val = float(valores_columna.max())
+            val_min, val_max = st.slider(
+                f"Rango permitido para {col} (%)",
+                min_value=min_val,
+                max_value=max_val,
+                value=(min_val, max_val),
+                step=0.01,
+                key=f"slider_{col}"
+            )
+            restricciones[col] = {"min": val_min, "max": val_max}
+
+        if st.button("🔧 Ejecutar optimización Simplex"):
+            try:
+                restricciones_min = {k: v["min"] for k, v in restricciones.items() if v["min"] > 0}
+                restricciones_max = {k: v["max"] for k, v in restricciones.items() if v["max"] < 100}
+                df_opt, costo = optimizar_simplex(
+                    df_filtrado,
+                    columnas_filtradas,
+                    restricciones_min=restricciones_min,
+                    restricciones_max=restricciones_max
+                )
+                st.success(f"Fórmula optimizada. Coste total: {costo:.2f} €/kg")
+                st.dataframe(df_opt[["Materia Prima", "%", "Precio €/kg"] + columnas_filtradas])
+                df_editado = df_opt.copy()
+                total_pct = df_editado["%"].sum()
+            except Exception as e:
+                st.error(f"❌ Error durante la optimización: {e}")
 
     st.subheader("📊 Resultados")
     precio, composicion = calcular_resultado_formula(df_editado, columnas_filtradas)
@@ -119,4 +142,3 @@ def flujo_crear_formula():
                 file_name=f"{nombre_formula.strip()}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-
