@@ -1,3 +1,10 @@
+# ------------------------------------------------------------------------------
+# FORMULATOR – Uso exclusivo de Iván Navarro
+# Todos los derechos reservados © 2025
+# Este archivo forma parte de un software no libre y no está autorizado su uso
+# ni distribución sin consentimiento expreso y por escrito del autor.
+# ------------------------------------------------------------------------------
+
 import streamlit as st
 import pandas as pd
 from utils.supabase_client import supabase
@@ -8,7 +15,9 @@ from utils.formula_resultados import calcular_resultado_formula
 from utils.guardar_formula import guardar_formula
 from utils.generar_qr import generar_qr
 from utils.exportar_formula import exportar_formula_excel
+from utils.optimizador_simplex import optimizar_simplex
 from streamlit_javascript import st_javascript
+
 
 def flujo_crear_formula():
     """Interfaz para crear y guardar nuevas fórmulas."""
@@ -54,6 +63,56 @@ def flujo_crear_formula():
     else:
         columnas_filtradas = columnas
 
+    df_optimizada = None
+    costo_optimizado = None
+
+    # ⚡️ OPTIMIZADOR SIMPLEX
+    st.markdown("### ⚙️ Optimización Simplex")
+
+    with st.expander("🧮 Optimizar fórmula automáticamente (Simplex)"):
+        df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
+
+        columnas_param_opt = [col for col in columnas if col in df_filtrado.columns and df_filtrado[col].fillna(0).gt(0).any()]
+
+        columnas_restricciones = st.multiselect(
+            "Selecciona parámetros técnicos a restringir",
+            options=columnas_param_opt,
+            default=[],
+            key="parametros_restringidos"
+        )
+
+        restricciones = {}
+        for col in columnas_restricciones:
+            valores_columna = df_filtrado[col].fillna(0)
+            min_val = float(valores_columna.min())
+            max_val = float(valores_columna.max())
+            val_min, val_max = st.slider(
+                f"Rango permitido para {col} (%)",
+                min_value=min_val,
+                max_value=max_val,
+                value=(min_val, max_val),
+                step=0.01,
+                key=f"slider_{col}"
+            )
+            restricciones[col] = {"min": val_min, "max": val_max}
+
+        if st.button("🔧 Ejecutar optimización Simplex"):
+            try:
+                restricciones_min = {k: v["min"] for k, v in restricciones.items() if v["min"] > 0}
+                restricciones_max = {k: v["max"] for k, v in restricciones.items() if v["max"] < 100}
+                df_optimizada, costo_optimizado = optimizar_simplex(
+                    df_filtrado,
+                    columnas,
+                    restricciones_min=restricciones_min,
+                    restricciones_max=restricciones_max
+                )
+                st.success(f"Fórmula optimizada. Coste total: {costo_optimizado:.2f} €/kg")
+                st.dataframe(df_optimizada[["Materia Prima", "%", "Precio €/kg"] + columnas_filtradas])
+            except Exception as e:
+                st.error(f"❌ Error durante la optimización: {e}")
+
+    st.markdown("### 📊 Comparativa de resultados")
+
     if abs(total_pct - 100) > 0.01:
         st.warning("⚠️ La suma de los porcentajes debe ser 100% para calcular.")
         forzar = st.checkbox(
@@ -61,50 +120,59 @@ def flujo_crear_formula():
             help="Activa esta opción si deseas calcular aunque la fórmula no sume exactamente 100%.",
             key="forzar_crear",
         )
-        if forzar:
-            st.info("Cálculo realizado con fórmula incompleta. Revisa los resultados con precaución.")
+        if not forzar:
+            return
+
+    precio_base, comp_base = calcular_resultado_formula(df_editado, columnas_filtradas)
+    if df_optimizada is not None:
+        precio_opt, comp_opt = calcular_resultado_formula(df_optimizada, columnas_filtradas)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.success(f"💰 Precio base: {precio_base:.2f} €/kg")
             mostrar_resultados(df_editado, columnas_filtradas)
+        with col2:
+            st.success(f"⚙️ Precio optimizado: {precio_opt:.2f} €/kg")
+            mostrar_resultados(df_optimizada, columnas_filtradas)
     else:
+        st.success(f"💰 Precio por kg de la fórmula: {precio_base:.2f} €")
         mostrar_resultados(df_editado, columnas_filtradas)
 
-        st.markdown("---")
-        st.subheader("📂 Guardar fórmula")
+    st.markdown("---")
+    st.subheader("📂 Guardar fórmula")
 
-        # Captura anticipada del host
-        host_url = st_javascript("window.location.origin") 
+    host_url = st_javascript("window.location.origin") 
 
-        nombre_formula = st.text_input("Nombre de la fórmula", placeholder="Ej. Bioestimulante Algas v1", key="nombre_crear")
-        if st.button("Guardar fórmula"):
-            if not nombre_formula.strip():
-                st.warning("Debes ingresar un nombre para guardar la fórmula.")
-            else:
-                # ✅ Reordenar columnas antes de guardar/exportar
-                columnas_base = ["Materia Prima", "%", "Precio €/kg"]
-                columnas_tecnicas = [
-                    col for col in df_editado.columns
-                    if col not in columnas_base and col != "id"
-                ]
-                columnas_ordenadas = columnas_base + columnas_tecnicas
-                df_editado = df_editado[columnas_ordenadas]
+    nombre_formula = st.text_input("Nombre de la fórmula", placeholder="Ej. Bioestimulante Algas v1", key="nombre_crear")
+    if st.button("Guardar fórmula"):
+        if not nombre_formula.strip():
+            st.warning("Debes ingresar un nombre para guardar la fórmula.")
+        else:
+            columnas_base = ["Materia Prima", "%", "Precio €/kg"]
+            columnas_tecnicas = [
+                col for col in df_editado.columns
+                if col not in columnas_base and col != "id"
+            ]
+            columnas_ordenadas = columnas_base + columnas_tecnicas
+            df_guardar = df_optimizada if df_optimizada is not None else df_editado
+            df_guardar = df_guardar[columnas_ordenadas]
 
-                precio, _ = calcular_resultado_formula(df_editado, columnas_filtradas)
-                formula_id = guardar_formula(df_editado, nombre_formula.strip(), precio)
-                url_formula = f"{host_url}/?formula_id={formula_id}"
+            precio, _ = calcular_resultado_formula(df_guardar, columnas_filtradas)
+            formula_id = guardar_formula(df_guardar, nombre_formula.strip(), precio)
+            url_formula = f"{host_url}/?formula_id={formula_id}"
 
-                qr_img = generar_qr(url_formula)
+            qr_img = generar_qr(url_formula)
 
-                st.success("✅ Fórmula guardada correctamente.")
-                st.image(qr_img, caption="Código QR para esta fórmula", use_container_width=False)
-                st.code(url_formula, language="markdown")
+            st.success("✅ Fórmula guardada correctamente.")
+            st.image(qr_img, caption="Código QR para esta fórmula", use_container_width=False)
+            st.code(url_formula, language="markdown")
 
-                # ✅ Exportar a Excel
-                st.markdown("---")
-                st.subheader("📤 Exportar fórmula a Excel")
-                excel_bytes = exportar_formula_excel(df_editado, nombre_formula.strip())
-                st.download_button(
-                    label="⬇️ Descargar Excel",
-                    data=excel_bytes,
-                    file_name=f"{nombre_formula.strip()}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-
+            st.markdown("---")
+            st.subheader("📤 Exportar fórmula a Excel")
+            excel_bytes = exportar_formula_excel(df_guardar, nombre_formula.strip())
+            st.download_button(
+                label="⬇️ Descargar Excel",
+                data=excel_bytes,
+                file_name=f"{nombre_formula.strip()}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
