@@ -1,12 +1,23 @@
+------------------------------------------------------------------------------
+# FORMULATOR – Uso exclusivo de Iván Navarro
+# Todos los derechos reservados © 2025
+# Este archivo forma parte de un software no libre y no está autorizado su uso
+# ni distribución sin consentimiento expreso y por escrito del autor.
+# ------------------------------------------------------------------------------
+
 import streamlit as st
 import pandas as pd
 from .families import obtener_familias_parametros
+
 
 def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
     """Muestra controles de filtro y devuelve un DataFrame filtrado."""
     df_filtrado = df.copy()
 
     with st.expander("🧪 Filtro avanzado para seleccionar materias primas"):
+        if st.button("🔄 Resetear filtros"):
+            st.experimental_rerun()
+
         nombre_filtro = st.text_input("Buscar por nombre")
         precio_min, precio_max = st.slider(
             "Rango de precio €/kg",
@@ -19,7 +30,7 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
         familias = obtener_familias_parametros()
         familias_sel = st.multiselect("Filtrar por familias presentes", list(familias.keys()))
 
-        columnas_tecnicas = [col for sublist in familias.values() for col in sublist if col in df.columns]
+        columnas_tecnicas = [col for sub in familias.values() for col in sub if col in df.columns]
 
         filtros_aplicados = []
         if st.checkbox("Agregar filtros técnicos personalizados"):
@@ -37,8 +48,11 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
         df_filtrado = df_filtrado[df_filtrado["Precio €/kg"].between(precio_min, precio_max)]
 
         if familias_sel:
-            columnas_familia = [col for f in familias_sel for col in familias[f] if col in df_filtrado.columns]
-            df_filtrado = df_filtrado[df_filtrado[columnas_familia].notna().any(axis=1)]
+            columnas_familia = [
+                col for fam in familias_sel for col in familias[fam] if col in df_filtrado.columns
+            ]
+            if columnas_familia:
+                df_filtrado = df_filtrado[df_filtrado[columnas_familia].notna().any(axis=1)]
 
         for col, op, val in filtros_aplicados:
             if col in df_filtrado.columns:
