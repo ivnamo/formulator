@@ -44,17 +44,19 @@ def ver_materia_prima():
     # Actualizar temporal
     st.session_state["mp_temp"] = seleccion_df.loc[seleccion_df[":Seleccionar"], "Materia Prima"].dropna().tolist()
 
-    if st.session_state["mp_temp"]:
-        if st.button("➕ Añadir seleccionadas a la lista"):
-            nuevas = [mp for mp in st.session_state["mp_temp"] if mp not in st.session_state["mp_seleccionadas"]]
-            st.session_state["mp_seleccionadas"].extend(nuevas)
-            st.session_state["mp_temp"] = []
-            st.rerun()
+    # Mostrar botón para añadir a la lista
+    st.markdown("---")
+    st.write(f"🔘 Marcadas actualmente: {len(st.session_state['mp_temp'])} materia(s) prima(s)")
+    if st.button("➕ Añadir seleccionadas a la lista"):
+        nuevas = [mp for mp in st.session_state["mp_temp"] if mp not in st.session_state["mp_seleccionadas"]]
+        st.session_state["mp_seleccionadas"].extend(nuevas)
+        st.session_state["mp_temp"] = []
+        st.rerun()
 
     # Mostrar lista persistente de seleccionadas
     st.markdown("### 🧾 Lista de materias primas seleccionadas")
     if st.session_state["mp_seleccionadas"]:
-        st.write(f"{len(st.session_state['mp_seleccionadas'])} seleccionadas:")
+        st.write(f"✅ {len(st.session_state['mp_seleccionadas'])} en la lista:")
         st.write(st.session_state["mp_seleccionadas"])
 
         eliminar = st.multiselect(
@@ -74,3 +76,4 @@ def ver_materia_prima():
             st.rerun()
     else:
         st.info("Añade materias primas a la lista para poder continuar.")
+
