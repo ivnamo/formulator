@@ -15,6 +15,7 @@ from crud_formulas.list_formulas import listar_formulas
 from crud_formulas.update_formula import actualizar_formula
 from crud_formulas.delete_formula import eliminar_formula
 from utils.cargar_formula import cargar_formula_por_id
+from crud_formulas.optimizar_formula import flujo_optimizar_formula  # 🆕 nuevo flujo
 
 # 🔐 Login simple usando Supabase email/password
 def login():
@@ -86,7 +87,7 @@ def main():
         return
 
     if menu == "Formulas":
-        subtarea = st.selectbox("Acción sobre fórmulas", ["Crear", "Actualizar", "Eliminar", "Ver"])
+        subtarea = st.selectbox("Acción sobre fórmulas", ["Crear", "Actualizar", "Eliminar", "Ver", "Optimizar"])
 
         if subtarea == "Crear":
             flujo_crear_formula()
@@ -99,8 +100,9 @@ def main():
             formula_id = listar_formulas(seleccionar=True)
             if formula_id:
                 cargar_formula_por_id(formula_id)
+        elif subtarea == "Optimizar":
+            flujo_optimizar_formula()
         return
-
 
 if __name__ == "__main__":
     main()
