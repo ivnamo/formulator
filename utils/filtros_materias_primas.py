@@ -32,17 +32,25 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
 
         columnas_tecnicas = [col for sub in familias.values() for col in sub if col in df.columns]
 
+        # 🎛️ Filtros técnicos con sliders por columna seleccionada
         filtros_aplicados = []
-        if st.checkbox("Agregar filtros técnicos personalizados"):
-            num_filtros = st.number_input("Número de condiciones", min_value=1, max_value=10, value=1, step=1)
+        columnas_filtrar = st.multiselect("Filtrar por columnas técnicas", columnas_tecnicas)
 
-            for i in range(int(num_filtros)):
-                col = st.selectbox(f"Columna #{i+1}", columnas_tecnicas, key=f"col_filtro_{i}")
-                op = st.selectbox(f"Condición #{i+1}", [">", ">=", "<", "<=", "="], key=f"op_filtro_{i}")
-                val = st.number_input(f"Valor #{i+1}", step=0.01, key=f"val_filtro_{i}")
-                filtros_aplicados.append((col, op, val))
+        for col in columnas_filtrar:
+            if col in df.columns:
+                min_val = float(df[col].min(skipna=True))
+                max_val = float(df[col].max(skipna=True))
+                val_min, val_max = st.slider(
+                    f"Rango para {col}",
+                    min_value=min_val,
+                    max_value=max_val,
+                    value=(min_val, max_val),
+                    step=0.01,
+                    key=f"slider_{col}"
+                )
+                filtros_aplicados.append((col, val_min, val_max))
 
-        # Aplicar todos los filtros
+        # Aplicar filtros
         if nombre_filtro:
             df_filtrado = df_filtrado[df_filtrado["Materia Prima"].str.contains(nombre_filtro, case=False, na=False)]
 
@@ -56,18 +64,7 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
                 suma_familia = df_filtrado[columnas_familia].fillna(0).sum(axis=1)
                 df_filtrado = df_filtrado[suma_familia > 0]
 
-        for col, op, val in filtros_aplicados:
-            if col in df_filtrado.columns:
-                if op == ">":
-                    df_filtrado = df_filtrado[df_filtrado[col] > val]
-                elif op == ">=":
-                    df_filtrado = df_filtrado[df_filtrado[col] >= val]
-                elif op == "<":
-                    df_filtrado = df_filtrado[df_filtrado[col] < val]
-                elif op == "<=":
-                    df_filtrado = df_filtrado[df_filtrado[col] <= val]
-                elif op == "=":
-                    df_filtrado = df_filtrado[df_filtrado[col] == val]
+        for col, min_v, max_v in filtros_aplicados:
+            df_filtrado = df_filtrado[df_filtrado[col].between(min_v, max_v)]
 
     return df_filtrado
-
