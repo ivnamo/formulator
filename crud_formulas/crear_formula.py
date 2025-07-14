@@ -5,7 +5,6 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
-
 import streamlit as st
 import pandas as pd
 from utils.supabase_client import supabase
@@ -31,9 +30,14 @@ def flujo_crear_formula():
 
     df_filtrado = aplicar_filtros_materias_primas(df)
 
+    materias_filtradas = df_filtrado["Materia Prima"].dropna().tolist()
+    seleccionadas_previas = st.session_state.get("mp_crear", [])
+    opciones_completas = list(set(materias_filtradas + seleccionadas_previas))
+
     seleccionadas = st.multiselect(
         "Selecciona las materias primas para tu fórmula",
-        options=df_filtrado["Materia Prima"].dropna().tolist(),
+        options=opciones_completas,
+        default=seleccionadas_previas,
         help="Puedes escribir para buscar por nombre",
         key="mp_crear",
     )
@@ -81,17 +85,15 @@ def flujo_crear_formula():
         st.markdown("---")
         st.subheader("📂 Guardar fórmula")
 
+        # Captura anticipada del host
         host_url = st_javascript("window.location.origin") 
 
-        nombre_formula = st.text_input(
-            "Nombre de la fórmula", 
-            placeholder="Ej. Bioestimulante Algas v1", 
-            key="nombre_crear"
-        )
+        nombre_formula = st.text_input("Nombre de la fórmula", placeholder="Ej. Bioestimulante Algas v1", key="nombre_crear")
         if st.button("Guardar fórmula"):
             if not nombre_formula.strip():
                 st.warning("Debes ingresar un nombre para guardar la fórmula.")
             else:
+                # ✅ Reordenar columnas antes de guardar/exportar
                 columnas_base = ["Materia Prima", "%", "Precio €/kg"]
                 columnas_tecnicas = [
                     col for col in df_editado.columns
@@ -110,6 +112,7 @@ def flujo_crear_formula():
                 st.image(qr_img, caption="Código QR para esta fórmula", use_container_width=False)
                 st.code(url_formula, language="markdown")
 
+                # ✅ Exportar a Excel
                 st.markdown("---")
                 st.subheader("📤 Exportar fórmula a Excel")
                 excel_bytes = exportar_formula_excel(df_editado, nombre_formula.strip())
