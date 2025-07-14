@@ -1,10 +1,3 @@
-# ------------------------------------------------------------------------------
-# FORMULATOR – Uso exclusivo de Iván Navarro
-# Todos los derechos reservados © 2025
-# Este archivo forma parte de un software no libre y no está autorizado su uso
-# ni distribución sin consentimiento expreso y por escrito del autor.
-# ------------------------------------------------------------------------------
-
 import streamlit as st
 import pandas as pd
 from utils.supabase_client import supabase
@@ -21,74 +14,48 @@ def ver_materia_prima():
         st.warning("No hay materias primas registradas.")
         return
 
-    # Inicializar listas persistentes
     if "mp_seleccionadas" not in st.session_state:
         st.session_state["mp_seleccionadas"] = []
-    if "mp_temp" not in st.session_state:
-        st.session_state["mp_temp"] = []
+
+    if "mp_checkbox_estado" not in st.session_state:
+        st.session_state["mp_checkbox_estado"] = {}
 
     df_filtrado = aplicar_filtros_materias_primas(df).copy()
 
-    # Asegurar columna booleana de selección
-    df_filtrado[":Seleccionar"] = df_filtrado["Materia Prima"].isin(st.session_state["mp_temp"])
+    st.markdown("### ✅ Materias primas filtradas")
+    for _, row in df_filtrado.iterrows():
+        nombre_mp = row["Materia Prima"]
+        unique_key = f"chk_{nombre_mp}"
 
-    st.markdown("### Resultados filtrados")
-    seleccion_df = st.data_editor(
-        df_filtrado,
-        use_container_width=True,
-        hide_index=True,
-        num_rows="dynamic",
-        key="tabla_editor_mp",
-        column_config={":Seleccionar": st.column_config.CheckboxColumn("✅")},
-        disabled=[col for col in df_filtrado.columns if col != ":Seleccionar"]
-    )
+        # Checkbox individual
+        marcado = st.checkbox(f"{nombre_mp} – {row.get('Precio €/kg', 'N/A')} €/kg", key=unique_key)
+        st.session_state["mp_checkbox_estado"][nombre_mp] = marcado
 
-    # ✅ Extraer los marcados del DataFrame editado
-    if ":Seleccionar" in seleccion_df.columns:
-        seleccionadas_temp = seleccion_df.loc[seleccion_df[":Seleccionar"], "Materia Prima"].dropna().tolist()
-    else:
-        seleccionadas_temp = []
+    # Obtener todas las seleccionadas desde el estado
+    seleccionadas_temp = [
+        mp for mp, marcado in st.session_state["mp_checkbox_estado"].items() if marcado
+    ]
 
-    # Logs de depuración 🔍
-    st.markdown("#### 🔍 DEBUG")
-    st.write("📌 Materias seleccionadas en esta sesión:", seleccionadas_temp)
-    st.write("📦 mp_temp antes:", st.session_state["mp_temp"])
-    st.write("📦 mp_seleccionadas (persistente):", st.session_state["mp_seleccionadas"])
+    st.markdown("### 🧪 Depuración")
+    st.write("📋 Marcadas ahora:", seleccionadas_temp)
+    st.write("📦 Lista persistente:", st.session_state["mp_seleccionadas"])
 
-    # Actualizar sesión temporal
-    st.session_state["mp_temp"] = seleccionadas_temp
-
-    # Mostrar botón para añadir a la lista persistente
-    st.markdown("---")
-    st.write(f"🔘 Marcadas actualmente: {len(st.session_state['mp_temp'])} materia(s) prima(s)")
     if st.button("➕ Añadir seleccionadas a la lista"):
-        nuevas = [mp for mp in st.session_state["mp_temp"] if mp not in st.session_state["mp_seleccionadas"]]
+        nuevas = [mp for mp in seleccionadas_temp if mp not in st.session_state["mp_seleccionadas"]]
         st.session_state["mp_seleccionadas"].extend(nuevas)
-        st.session_state["mp_temp"] = []
+        st.success(f"{len(nuevas)} añadidas.")
+        # Opcional: limpiar checkboxes
+        for mp in nuevas:
+            st.session_state["mp_checkbox_estado"][mp] = False
         st.rerun()
 
-    # Mostrar lista persistente de seleccionadas
-    st.markdown("### 🧾 Lista de materias primas seleccionadas")
+    st.markdown("### 📌 Lista acumulada")
     if st.session_state["mp_seleccionadas"]:
-        st.write(f"✅ {len(st.session_state['mp_seleccionadas'])} en la lista:")
         st.write(st.session_state["mp_seleccionadas"])
-
-        eliminar = st.multiselect(
-            "❌ Quitar de la lista",
-            options=st.session_state["mp_seleccionadas"],
-            key="mp_a_eliminar"
-        )
-
-        if eliminar:
-            if st.button("🗑️ Quitar seleccionadas"):
-                st.session_state["mp_seleccionadas"] = [
-                    mp for mp in st.session_state["mp_seleccionadas"] if mp not in eliminar
-                ]
-                st.rerun()
-
-        if st.button("🧪 Usar estas materias primas en nueva fórmula"):
-            st.session_state["mp_crear"] = st.session_state["mp_seleccionadas"]
-            st.session_state["page"] = "crear_formula"
+        eliminar = st.multiselect("❌ Quitar", st.session_state["mp_seleccionadas"])
+        if st.button("🗑️ Quitar seleccionadas"):
+            st.session_state["mp_seleccionadas"] = [mp for mp in st.session_state["mp_seleccionadas"] if mp not in eliminar]
             st.rerun()
     else:
-        st.info("Añade materias primas a la lista para poder continuar.")
+        st.info("Aún no has añadido ninguna materia prima.")
+
