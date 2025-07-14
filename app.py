@@ -10,6 +10,7 @@ from utils.supabase_client import supabase
 from crud_mp.create_materia_prima import crear_materia_prima
 from crud_mp.update_materia_prima import actualizar_materia_prima
 from crud_mp.delete_materia_prima import eliminar_materia_prima
+from crud_mp.ver_materia_prima import ver_materia_prima
 from crud_formulas.crear_formula import flujo_crear_formula
 from crud_formulas.list_formulas import listar_formulas
 from crud_formulas.update_formula import actualizar_formula
@@ -75,7 +76,7 @@ def main():
         """)
 
     if menu == "Materias Primas":
-        subtarea = st.selectbox("Acción sobre materias primas", ["Crear", "Actualizar", "Eliminar"])
+        subtarea = st.selectbox("Acción sobre materias primas", ["Ver", "Crear", "Actualizar", "Eliminar"])
 
         if subtarea == "Crear":
             crear_materia_prima()
@@ -83,10 +84,12 @@ def main():
             actualizar_materia_prima()
         elif subtarea == "Eliminar":
             eliminar_materia_prima()
+        elif subtarea == "Ver":
+            ver_materia_prima()
         return
 
     if menu == "Formulas":
-        subtarea = st.selectbox("Acción sobre fórmulas", ["Crear", "Actualizar", "Eliminar", "Ver"])
+        subtarea = st.selectbox("Acción sobre fórmulas", ["Ver", "Crear", "Actualizar", "Eliminar", "Ver"])
 
         if subtarea == "Crear":
             flujo_crear_formula()
