@@ -5,13 +5,11 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
-# utils/optimizador_simplex.py
-
 import numpy as np
 import pandas as pd
 from scipy.optimize import linprog
 
-def optimizar_simplex(df: pd.DataFrame, columnas_objetivo: list, restricciones_min: dict = None):
+def optimizar_simplex(df: pd.DataFrame, columnas_objetivo: list, restricciones_min: dict = None, restricciones_max: dict = None):
     """
     Optimiza los % de materias primas para minimizar el costo total usando Simplex moderno (linprog con highs).
 
@@ -19,6 +17,7 @@ def optimizar_simplex(df: pd.DataFrame, columnas_objetivo: list, restricciones_m
         df: DataFrame con columnas ['Materia Prima', 'Precio €/kg', columnas_objetivo...]
         columnas_objetivo: Lista de parámetros técnicos a optimizar.
         restricciones_min: Dict con mínimos. Ej: {"Ntotal": 3.0, "K2O": 1.0}
+        restricciones_max: Dict con máximos. Ej: {"Ntotal": 5.0}
 
     Returns:
         df_resultado: DataFrame con columna "%" optimizada.
@@ -34,16 +33,24 @@ def optimizar_simplex(df: pd.DataFrame, columnas_objetivo: list, restricciones_m
     A_eq = [np.ones(n)]
     b_eq = [100]
 
-    # Restricciones técnicas mínimas (Ax >= b → -Ax <= -b)
     A_ub = []
     b_ub = []
 
+    # Restricciones técnicas mínimas (Ax >= b → -Ax <= -b)
     if restricciones_min:
         for param, val in restricciones_min.items():
             if param in df.columns:
-                coef = df[param].fillna(0).values / 100  # convertir a proporción
+                coef = df[param].fillna(0).values / 100
                 A_ub.append(-coef)
                 b_ub.append(-val)
+
+    # Restricciones técnicas máximas (Ax <= b)
+    if restricciones_max:
+        for param, val in restricciones_max.items():
+            if param in df.columns:
+                coef = df[param].fillna(0).values / 100
+                A_ub.append(coef)
+                b_ub.append(val)
 
     bounds = [(0, 100) for _ in range(n)]
 
