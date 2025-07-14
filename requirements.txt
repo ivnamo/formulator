@@ -5,5 +5,9 @@ supabase
 streamlit-aggrid
 qrcode
 Pillow
+streamlit-javascript
+reportlab
+
+
 
 

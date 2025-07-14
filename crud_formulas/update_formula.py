@@ -69,6 +69,15 @@ def actualizar_formula(formula_id: str):
     if df_editado is None:
         return
 
+    # ✅ Reordenar columnas antes de guardar
+    columnas_base = ["Materia Prima", "%", "Precio €/kg"]
+    columnas_tecnicas = [
+        col for col in df_editado.columns
+        if col not in columnas_base and col != "id"
+    ]
+    columnas_ordenadas = columnas_base + columnas_tecnicas
+    df_editado = df_editado[columnas_ordenadas]
+
     familias = obtener_familias_parametros()
     columnas = [col for fam in familias.values() for col in fam]
 
