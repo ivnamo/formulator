@@ -23,7 +23,13 @@ def ver_materia_prima():
 
     df_filtrado = aplicar_filtros_materias_primas(df)
     df_filtrado = df_filtrado.copy()
-    df_filtrado[":Seleccionar"] = False
+
+    # Inicializar lista de seleccionadas si no existe
+    if "mp_seleccionadas" not in st.session_state:
+        st.session_state["mp_seleccionadas"] = []
+
+    # Crear columna de selección basada en session_state
+    df_filtrado[":Seleccionar"] = df_filtrado["Materia Prima"].isin(st.session_state["mp_seleccionadas"])
 
     st.markdown("### Resultados filtrados")
     seleccion_df = st.data_editor(
@@ -35,7 +41,9 @@ def ver_materia_prima():
         disabled=[col for col in df_filtrado.columns if col != ":Seleccionar"]
     )
 
+    # Actualizar selección en session_state
     seleccionadas = seleccion_df.loc[seleccion_df[":Seleccionar"], "Materia Prima"].dropna().tolist()
+    st.session_state["mp_seleccionadas"] = seleccionadas
 
     if seleccionadas:
         if st.button("🧪 Usar estas materias primas en nueva fórmula"):
@@ -44,3 +52,4 @@ def ver_materia_prima():
             st.rerun()
     else:
         st.info("Marca al menos una materia prima en la tabla para continuar.")
+
