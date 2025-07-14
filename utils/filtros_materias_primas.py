@@ -15,57 +15,58 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
     df_filtrado = df.copy()
 
     with st.expander("🧪 Filtro avanzado para seleccionar materias primas"):
+
+        # Valores por defecto fijos
+        VALORES_DEFECTO = {
+            "nombre_filtro": "",
+            "precio_minmax": (
+                float(df["Precio €/kg"].min()),
+                float(df["Precio €/kg"].max())
+            ),
+            "filtro_familias": [],
+            "filtro_columnas": []
+        }
+
         if st.button("🔄 Resetear filtros"):
             st.session_state["reset_filtros_mp"] = True
             st.rerun()
 
         if st.session_state.get("reset_filtros_mp"):
-            claves_a_borrar = [k for k in st.session_state.keys() if any(
-                k.startswith(prefix) for prefix in [
-                    "col_filtro_", "op_filtro_", "val_filtro_", "slider_",
-                    "mp_crear", "familias_crear", "reset_filtros_mp",
-                    "filtro_familias", "filtro_columnas", "nombre_filtro",
-                    "precio_minmax", "rango_precio"
-                ]
-            )]
-            for k in claves_a_borrar:
-                del st.session_state[k]
+            for k, v in VALORES_DEFECTO.items():
+                st.session_state[k] = v
             st.session_state["reset_filtros_mp"] = False
             st.rerun()
 
-        # Inicialización de valores por defecto si no están
-        if "precio_minmax" not in st.session_state:
-            st.session_state["precio_minmax"] = (
-                float(df["Precio €/kg"].min()),
-                float(df["Precio €/kg"].max())
-            )
+        nombre_filtro = st.text_input(
+            "Buscar por nombre",
+            value=VALORES_DEFECTO["nombre_filtro"],
+            key="nombre_filtro"
+        )
 
-        nombre_filtro = st.text_input("Buscar por nombre", key="nombre_filtro")
         precio_min, precio_max = st.slider(
             "Rango de precio €/kg",
             min_value=float(df["Precio €/kg"].min()),
             max_value=float(df["Precio €/kg"].max()),
-            value=st.session_state["precio_minmax"],
+            value=VALORES_DEFECTO["precio_minmax"],
             step=0.1,
-            key="rango_precio"
+            key="precio_minmax"
         )
 
         familias = obtener_familias_parametros()
         familias_sel = st.multiselect(
             "Filtrar por familias presentes",
             list(familias.keys()),
-            default=[],
+            default=VALORES_DEFECTO["filtro_familias"],
             key="filtro_familias"
         )
 
         columnas_tecnicas = [col for sub in familias.values() for col in sub if col in df.columns]
 
-        # 🎛️ Filtros técnicos con sliders por columna seleccionada
         filtros_aplicados = []
         columnas_filtrar = st.multiselect(
             "Filtrar por columnas técnicas",
             columnas_tecnicas,
-            default=[],
+            default=VALORES_DEFECTO["filtro_columnas"],
             key="filtro_columnas"
         )
 
@@ -101,3 +102,4 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
             df_filtrado = df_filtrado[df_filtrado[col].between(min_v, max_v)]
 
     return df_filtrado
+
