@@ -41,8 +41,13 @@ def ver_materia_prima():
         disabled=[col for col in df_filtrado.columns if col != ":Seleccionar"]
     )
 
-    # Actualizar temporal
-    st.session_state["mp_temp"] = seleccion_df.loc[seleccion_df[":Seleccionar"], "Materia Prima"].dropna().tolist()
+    # Extraer selección actual desde la tabla editada
+    if ":Seleccionar" in seleccion_df.columns:
+        seleccionadas_temp = seleccion_df[seleccion_df[":Seleccionar"] == True]["Materia Prima"].dropna().tolist()
+    else:
+        seleccionadas_temp = []
+
+    st.session_state["mp_temp"] = seleccionadas_temp
 
     # Mostrar botón para añadir a la lista
     st.markdown("---")
