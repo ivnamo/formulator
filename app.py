@@ -89,7 +89,7 @@ def main():
         return
 
     if menu == "Formulas":
-        subtarea = st.selectbox("Acción sobre fórmulas", ["Ver", "Crear", "Actualizar", "Eliminar", "Ver"])
+        subtarea = st.selectbox("Acción sobre fórmulas", ["Ver", "Crear", "Actualizar", "Eliminar"])
 
         if subtarea == "Crear":
             flujo_crear_formula()
