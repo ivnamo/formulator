@@ -5,64 +5,59 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
-import numpy as np
+import streamlit as st
 import pandas as pd
-from scipy.optimize import linprog
+from utils.supabase_client import supabase
+from utils.families import obtener_familias_parametros
+from utils.optimizador_simplex import optimizar_simplex
+from utils.formula_resultados import calcular_resultado_formula
+from utils.resultados import mostrar_resultados
 
-def optimizar_simplex(df: pd.DataFrame, columnas_objetivo: list, restricciones_min: dict = None, restricciones_max: dict = None):
-    """
-    Optimiza los % de materias primas para minimizar el costo total usando Simplex moderno (linprog con highs).
+def flujo_optimizar_formula():
+    st.title("🧮 Optimización de Fórmulas")
 
-    Args:
-        df: DataFrame con columnas ['Materia Prima', 'Precio €/kg', columnas_objetivo...]
-        columnas_objetivo: Lista de parámetros técnicos a optimizar.
-        restricciones_min: Dict con mínimos. Ej: {"Ntotal": 3.0, "K2O": 1.0}
-        restricciones_max: Dict con máximos. Ej: {"Ntotal": 5.0}
+    response = supabase.table("materias_primas").select("*").execute()
+    df = pd.DataFrame(response.data)
+    df["%"] = 0.0
 
-    Returns:
-        df_resultado: DataFrame con columna "%" optimizada.
-        costo_total: Costo mínimo logrado (€/kg).
-    """
-    precios = df["Precio €/kg"].fillna(0).values
-    n = len(precios)
+    if df.empty or "Materia Prima" not in df.columns:
+        st.error("No hay materias primas disponibles o falta la columna 'Materia Prima'.")
+        return
 
-    # Objetivo: minimizar costo total
-    c = precios
+    seleccionadas = st.multiselect("Selecciona materias primas para optimizar", df["Materia Prima"].dropna().tolist())
+    if not seleccionadas:
+        st.info("Selecciona al menos una materia prima para empezar.")
+        return
 
-    # Restricción: suma de porcentajes debe ser 100%
-    A_eq = [np.ones(n)]
-    b_eq = [100]
+    df_seleccion = df[df["Materia Prima"].isin(seleccionadas)].copy()
 
-    A_ub = []
-    b_ub = []
+    familias = obtener_familias_parametros()
+    seleccionadas_familias = st.multiselect("Selecciona familias de parámetros", list(familias), default=list(familias))
+    columnas_tecnicas = [col for fam in seleccionadas_familias for col in familias[fam] if col in df.columns]
 
-    # Restricciones técnicas mínimas (Ax >= b → -Ax <= -b)
-    if restricciones_min:
-        for param, val in restricciones_min.items():
-            if param in df.columns:
-                coef = df[param].fillna(0).values / 100
-                A_ub.append(-coef)
-                b_ub.append(-val)
+    columnas_param_opt = [col for col in columnas_tecnicas if df_seleccion[col].fillna(0).gt(0).any()]
+    columnas_restricciones = st.multiselect("Selecciona parámetros a restringir", columnas_param_opt)
 
-    # Restricciones técnicas máximas (Ax <= b)
-    if restricciones_max:
-        for param, val in restricciones_max.items():
-            if param in df.columns:
-                coef = df[param].fillna(0).values / 100
-                A_ub.append(coef)
-                b_ub.append(val)
+    restricciones = {}
+    for col in columnas_restricciones:
+        valores = df_seleccion[col].fillna(0)
+        min_val = float(valores.min())
+        max_val = float(valores.max())
+        val_min, val_max = st.slider(f"Rango para {col} (%)", min_value=min_val, max_value=max_val, value=(min_val, max_val), step=0.01)
+        restricciones[col] = {"min": val_min, "max": val_max}
 
-    bounds = [(0, 100) for _ in range(n)]
+    if st.button("🔧 Ejecutar optimización"):
+        try:
+            restricciones_min = {k: v["min"] for k, v in restricciones.items()}
+            restricciones_max = {k: v["max"] for k, v in restricciones.items()}
+            df_opt, costo = optimizar_simplex(df_seleccion, columnas_tecnicas, restricciones_min, restricciones_max)
 
-    resultado = linprog(c=c, A_ub=A_ub or None, b_ub=b_ub or None,
-                        A_eq=A_eq, b_eq=b_eq,
-                        bounds=bounds, method="highs")
+            st.success(f"✅ Fórmula optimizada. Costo total: {costo:.2f} €/kg")
+            st.dataframe(df_opt[["Materia Prima", "%", "Precio €/kg"] + columnas_tecnicas])
 
-    if not resultado.success:
-        raise ValueError(f"Optimización fallida: {resultado.message}")
+            st.markdown("### 📊 Composición de la fórmula optimizada")
+            _, composicion = calcular_resultado_formula(df_opt, columnas_tecnicas)
+            mostrar_resultados(df_opt, columnas_tecnicas)
 
-    df_resultado = df.copy()
-    df_resultado["%"] = resultado.x.round(4)
-    costo_total = np.dot(precios, resultado.x) / 100  # €/kg
-
-    return df_resultado, costo_total
+        except Exception as e:
+            st.error(f"❌ Error en la optimización: {e}")
