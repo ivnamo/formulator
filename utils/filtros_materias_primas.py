@@ -34,12 +34,13 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
 
         filtros_aplicados = []
         if st.checkbox("Agregar filtros técnicos personalizados"):
-            for col in columnas_tecnicas:
-                usar = st.checkbox(f"{col}", value=False, key=f"usar_filtro_{col}")
-                if usar:
-                    operador = st.selectbox(f"Condición para {col}", [">", ">=", "<", "<=", "="], key=f"op_filtro_{col}")
-                    valor = st.number_input(f"Valor para {col}", step=0.01, key=f"val_filtro_{col}")
-                    filtros_aplicados.append((col, operador, valor))
+            num_filtros = st.number_input("Número de condiciones", min_value=1, max_value=10, value=1, step=1)
+
+            for i in range(int(num_filtros)):
+                col = st.selectbox(f"Columna #{i+1}", columnas_tecnicas, key=f"col_filtro_{i}")
+                op = st.selectbox(f"Condición #{i+1}", [">", ">=", "<", "<=", "="], key=f"op_filtro_{i}")
+                val = st.number_input(f"Valor #{i+1}", step=0.01, key=f"val_filtro_{i}")
+                filtros_aplicados.append((col, op, val))
 
         # Aplicar todos los filtros
         if nombre_filtro:
@@ -69,3 +70,4 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
                     df_filtrado = df_filtrado[df_filtrado[col] == val]
 
     return df_filtrado
+
