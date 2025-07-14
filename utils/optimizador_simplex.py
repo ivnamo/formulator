@@ -5,6 +5,11 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
+import pandas as pd
+import numpy as np
+from scipy.optimize import linprog
+
+
 def optimizar_simplex(df: pd.DataFrame, columnas_objetivo: list, restricciones_min: dict = None, restricciones_max: dict = None):
     """
     Optimiza los % de materias primas para minimizar el costo total usando Simplex moderno (linprog con highs).
