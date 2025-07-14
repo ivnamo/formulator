@@ -20,30 +20,36 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
             st.rerun()
 
         if st.session_state.get("reset_filtros_mp"):
-            claves_a_borrar = [k for k in st.session_state.keys() if k.startswith(("col_filtro_", "op_filtro_", "val_filtro_", "slider_", "mp_crear", "familias_crear"))]
+            claves_a_borrar = [k for k in st.session_state.keys() if any(
+                k.startswith(prefix) for prefix in [
+                    "col_filtro_", "op_filtro_", "val_filtro_", "slider_",
+                    "mp_crear", "familias_crear", "reset_filtros_mp",
+                    "filtro_familias", "filtro_columnas", "nombre_filtro"
+                ]
+            )]
             for k in claves_a_borrar:
                 del st.session_state[k]
             st.session_state["reset_filtros_mp"] = False
             st.rerun()
 
-
-        nombre_filtro = st.text_input("Buscar por nombre")
+        nombre_filtro = st.text_input("Buscar por nombre", key="nombre_filtro")
         precio_min, precio_max = st.slider(
             "Rango de precio €/kg",
             min_value=0.0,
             max_value=float(df["Precio €/kg"].max()) if not df.empty else 100.0,
             value=(0.0, float(df["Precio €/kg"].max()) if not df.empty else 100.0),
-            step=0.1
+            step=0.1,
+            key="rango_precio"
         )
 
         familias = obtener_familias_parametros()
-        familias_sel = st.multiselect("Filtrar por familias presentes", list(familias.keys()))
+        familias_sel = st.multiselect("Filtrar por familias presentes", list(familias.keys()), key="filtro_familias")
 
         columnas_tecnicas = [col for sub in familias.values() for col in sub if col in df.columns]
 
         # 🎛️ Filtros técnicos con sliders por columna seleccionada
         filtros_aplicados = []
-        columnas_filtrar = st.multiselect("Filtrar por columnas técnicas", columnas_tecnicas)
+        columnas_filtrar = st.multiselect("Filtrar por columnas técnicas", columnas_tecnicas, key="filtro_columnas")
 
         for col in columnas_filtrar:
             if col in df.columns:
@@ -77,4 +83,3 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
             df_filtrado = df_filtrado[df_filtrado[col].between(min_v, max_v)]
 
     return df_filtrado
-
