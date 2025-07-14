@@ -16,7 +16,13 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
 
     with st.expander("🧪 Filtro avanzado para seleccionar materias primas"):
         if st.button("🔄 Resetear filtros"):
-            st.experimental_rerun()
+            st.session_state["reset_filtros_mp"] = True
+            st.rerun()
+
+        if st.session_state.get("reset_filtros_mp"):
+            st.session_state.clear()
+            st.session_state["reset_filtros_mp"] = False
+            st.rerun()
 
         nombre_filtro = st.text_input("Buscar por nombre")
         precio_min, precio_max = st.slider(
@@ -68,3 +74,4 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
             df_filtrado = df_filtrado[df_filtrado[col].between(min_v, max_v)]
 
     return df_filtrado
+
