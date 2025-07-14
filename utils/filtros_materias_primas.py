@@ -37,9 +37,20 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
             st.session_state["reset_filtros_mp"] = False
             st.rerun()
 
+        if "nombre_filtro" not in st.session_state:
+            st.session_state["nombre_filtro"] = VALORES_DEFECTO["nombre_filtro"]
+
+        if "precio_minmax" not in st.session_state:
+            st.session_state["precio_minmax"] = VALORES_DEFECTO["precio_minmax"]
+
+        if "filtro_familias" not in st.session_state:
+            st.session_state["filtro_familias"] = VALORES_DEFECTO["filtro_familias"]
+
+        if "filtro_columnas" not in st.session_state:
+            st.session_state["filtro_columnas"] = VALORES_DEFECTO["filtro_columnas"]
+
         nombre_filtro = st.text_input(
             "Buscar por nombre",
-            value=VALORES_DEFECTO["nombre_filtro"],
             key="nombre_filtro"
         )
 
@@ -47,7 +58,7 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
             "Rango de precio €/kg",
             min_value=float(df["Precio €/kg"].min()),
             max_value=float(df["Precio €/kg"].max()),
-            value=VALORES_DEFECTO["precio_minmax"],
+            value=st.session_state["precio_minmax"],
             step=0.1,
             key="precio_minmax"
         )
@@ -56,7 +67,7 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
         familias_sel = st.multiselect(
             "Filtrar por familias presentes",
             list(familias.keys()),
-            default=VALORES_DEFECTO["filtro_familias"],
+            default=st.session_state["filtro_familias"],
             key="filtro_familias"
         )
 
@@ -66,7 +77,7 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
         columnas_filtrar = st.multiselect(
             "Filtrar por columnas técnicas",
             columnas_tecnicas,
-            default=VALORES_DEFECTO["filtro_columnas"],
+            default=st.session_state["filtro_columnas"],
             key="filtro_columnas"
         )
 
@@ -102,4 +113,3 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
             df_filtrado = df_filtrado[df_filtrado[col].between(min_v, max_v)]
 
     return df_filtrado
-
