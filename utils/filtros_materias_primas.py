@@ -24,7 +24,8 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
                 k.startswith(prefix) for prefix in [
                     "col_filtro_", "op_filtro_", "val_filtro_", "slider_",
                     "mp_crear", "familias_crear", "reset_filtros_mp",
-                    "filtro_familias", "filtro_columnas", "nombre_filtro"
+                    "filtro_familias", "filtro_columnas", "nombre_filtro",
+                    "precio_minmax", "rango_precio"
                 ]
             )]
             for k in claves_a_borrar:
@@ -32,24 +33,41 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
             st.session_state["reset_filtros_mp"] = False
             st.rerun()
 
+        # Inicialización de valores por defecto si no están
+        if "precio_minmax" not in st.session_state:
+            st.session_state["precio_minmax"] = (
+                float(df["Precio €/kg"].min()),
+                float(df["Precio €/kg"].max())
+            )
+
         nombre_filtro = st.text_input("Buscar por nombre", key="nombre_filtro")
         precio_min, precio_max = st.slider(
             "Rango de precio €/kg",
-            min_value=0.0,
-            max_value=float(df["Precio €/kg"].max()) if not df.empty else 100.0,
-            value=(0.0, float(df["Precio €/kg"].max()) if not df.empty else 100.0),
+            min_value=float(df["Precio €/kg"].min()),
+            max_value=float(df["Precio €/kg"].max()),
+            value=st.session_state["precio_minmax"],
             step=0.1,
             key="rango_precio"
         )
 
         familias = obtener_familias_parametros()
-        familias_sel = st.multiselect("Filtrar por familias presentes", list(familias.keys()), key="filtro_familias")
+        familias_sel = st.multiselect(
+            "Filtrar por familias presentes",
+            list(familias.keys()),
+            default=[],
+            key="filtro_familias"
+        )
 
         columnas_tecnicas = [col for sub in familias.values() for col in sub if col in df.columns]
 
         # 🎛️ Filtros técnicos con sliders por columna seleccionada
         filtros_aplicados = []
-        columnas_filtrar = st.multiselect("Filtrar por columnas técnicas", columnas_tecnicas, key="filtro_columnas")
+        columnas_filtrar = st.multiselect(
+            "Filtrar por columnas técnicas",
+            columnas_tecnicas,
+            default=[],
+            key="filtro_columnas"
+        )
 
         for col in columnas_filtrar:
             if col in df.columns:
