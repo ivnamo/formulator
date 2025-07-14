@@ -18,6 +18,7 @@ from utils.exportar_formula import exportar_formula_excel
 from utils.optimizador_simplex import optimizar_simplex
 from streamlit_javascript import st_javascript
 
+
 def flujo_crear_formula():
     """Interfaz para crear y guardar nuevas fórmulas."""
     response = supabase.table("materias_primas").select("*").execute()
@@ -42,6 +43,8 @@ def flujo_crear_formula():
     st.subheader("🧪 Fórmula editable")
     df_editado, total_pct = mostrar_editor_formula(df, seleccionadas)
 
+    filtrar_ceros = st.checkbox("Mostrar solo parámetros con cantidad > 0%", value=True)
+
     familias = obtener_familias_parametros()
     seleccionadas_familias = st.multiselect(
         "Selecciona familias",
@@ -51,7 +54,17 @@ def flujo_crear_formula():
     )
     columnas = [col for fam in seleccionadas_familias for col in familias[fam]]
 
-    columnas_filtradas = [col for col in columnas if col in df_editado.columns]
+    if filtrar_ceros:
+        columnas_filtradas = [
+            col
+            for col in columnas
+            if col in df_editado.columns and (df_editado[col] * df_editado["%"] / 100).sum() > 0
+        ]
+    else:
+        columnas_filtradas = columnas
+
+    df_optimizada = None
+    costo_optimizado = None
 
     # ⚡️ OPTIMIZADOR SIMPLEX
     st.markdown("### ⚙️ Optimización Simplex")
@@ -87,23 +100,43 @@ def flujo_crear_formula():
             try:
                 restricciones_min = {k: v["min"] for k, v in restricciones.items() if v["min"] > 0}
                 restricciones_max = {k: v["max"] for k, v in restricciones.items() if v["max"] < 100}
-                df_opt, costo = optimizar_simplex(
+                df_optimizada, costo_optimizado = optimizar_simplex(
                     df_filtrado,
-                    columnas_filtradas,
+                    columnas,
                     restricciones_min=restricciones_min,
                     restricciones_max=restricciones_max
                 )
-                st.success(f"Fórmula optimizada. Coste total: {costo:.2f} €/kg")
-                st.dataframe(df_opt[["Materia Prima", "%", "Precio €/kg"] + columnas_filtradas])
-                df_editado = df_opt.copy()
-                total_pct = df_editado["%"].sum()
+                st.success(f"Fórmula optimizada. Coste total: {costo_optimizado:.2f} €/kg")
+                st.dataframe(df_optimizada[["Materia Prima", "%", "Precio €/kg"] + columnas_filtradas])
             except Exception as e:
                 st.error(f"❌ Error durante la optimización: {e}")
 
-    st.subheader("📊 Resultados")
-    precio, composicion = calcular_resultado_formula(df_editado, columnas_filtradas)
-    st.success(f"💰 Precio por kg de la fórmula: {precio:.2f} €")
-    mostrar_resultados(df_editado, columnas_filtradas)
+    st.markdown("### 📊 Comparativa de resultados")
+
+    if abs(total_pct - 100) > 0.01:
+        st.warning("⚠️ La suma de los porcentajes debe ser 100% para calcular.")
+        forzar = st.checkbox(
+            "🧪 Calcular de todos modos (forzar cálculo)",
+            help="Activa esta opción si deseas calcular aunque la fórmula no sume exactamente 100%.",
+            key="forzar_crear",
+        )
+        if not forzar:
+            return
+
+    precio_base, comp_base = calcular_resultado_formula(df_editado, columnas_filtradas)
+    if df_optimizada is not None:
+        precio_opt, comp_opt = calcular_resultado_formula(df_optimizada, columnas_filtradas)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.success(f"💰 Precio base: {precio_base:.2f} €/kg")
+            mostrar_resultados(df_editado, columnas_filtradas)
+        with col2:
+            st.success(f"⚙️ Precio optimizado: {precio_opt:.2f} €/kg")
+            mostrar_resultados(df_optimizada, columnas_filtradas)
+    else:
+        st.success(f"💰 Precio por kg de la fórmula: {precio_base:.2f} €")
+        mostrar_resultados(df_editado, columnas_filtradas)
 
     st.markdown("---")
     st.subheader("📂 Guardar fórmula")
@@ -121,10 +154,11 @@ def flujo_crear_formula():
                 if col not in columnas_base and col != "id"
             ]
             columnas_ordenadas = columnas_base + columnas_tecnicas
-            df_editado = df_editado[columnas_ordenadas]
+            df_guardar = df_optimizada if df_optimizada is not None else df_editado
+            df_guardar = df_guardar[columnas_ordenadas]
 
-            precio, _ = calcular_resultado_formula(df_editado, columnas_filtradas)
-            formula_id = guardar_formula(df_editado, nombre_formula.strip(), precio)
+            precio, _ = calcular_resultado_formula(df_guardar, columnas_filtradas)
+            formula_id = guardar_formula(df_guardar, nombre_formula.strip(), precio)
             url_formula = f"{host_url}/?formula_id={formula_id}"
 
             qr_img = generar_qr(url_formula)
@@ -135,7 +169,7 @@ def flujo_crear_formula():
 
             st.markdown("---")
             st.subheader("📤 Exportar fórmula a Excel")
-            excel_bytes = exportar_formula_excel(df_editado, nombre_formula.strip())
+            excel_bytes = exportar_formula_excel(df_guardar, nombre_formula.strip())
             st.download_button(
                 label="⬇️ Descargar Excel",
                 data=excel_bytes,
