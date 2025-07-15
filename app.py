@@ -10,12 +10,13 @@ from utils.supabase_client import supabase
 from crud_mp.create_materia_prima import crear_materia_prima
 from crud_mp.update_materia_prima import actualizar_materia_prima
 from crud_mp.delete_materia_prima import eliminar_materia_prima
+from crud_mp.ver_materia_prima import ver_materia_prima  # ✅ nuevo
 from crud_formulas.crear_formula import flujo_crear_formula
 from crud_formulas.list_formulas import listar_formulas
 from crud_formulas.update_formula import actualizar_formula
 from crud_formulas.delete_formula import eliminar_formula
+from crud_formulas.optimizar_formula import flujo_optimizar_formula
 from utils.cargar_formula import cargar_formula_por_id
-from crud_formulas.optimizar_formula import flujo_optimizar_formula  # 🆕 nuevo flujo
 
 
 # 🔐 Login simple usando Supabase email/password
@@ -87,9 +88,11 @@ def main():
         """)
 
     if menu == "Materias Primas":
-        subtarea = st.selectbox("Acción sobre materias primas", ["Crear", "Actualizar", "Eliminar"])
+        subtarea = st.selectbox("Acción sobre materias primas", ["Ver", "Crear", "Actualizar", "Eliminar"])
 
-        if subtarea == "Crear":
+        if subtarea == "Ver":
+            ver_materia_prima()
+        elif subtarea == "Crear":
             crear_materia_prima()
         elif subtarea == "Actualizar":
             actualizar_materia_prima()
@@ -98,7 +101,7 @@ def main():
         return
 
     if menu == "Formulas":
-        subtarea = st.selectbox("Acción sobre fórmulas", ["Crear", "Actualizar", "Eliminar", "Ver", "Optimizar"])
+        subtarea = st.selectbox("Acción sobre fórmulas", ["Crear", "Ver", "Actualizar", "Eliminar", "Optimizar"])
 
         if subtarea == "Crear":
             flujo_crear_formula()
