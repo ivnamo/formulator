@@ -7,10 +7,14 @@
 
 import streamlit as st
 from utils.supabase_client import supabase
+
+# Módulos materias primas
 from crud_mp.create_materia_prima import crear_materia_prima
 from crud_mp.update_materia_prima import actualizar_materia_prima
 from crud_mp.delete_materia_prima import eliminar_materia_prima
-from crud_mp.ver_materia_prima import ver_materia_prima  # ✅ nuevo
+from crud_mp.ver_materia_prima import ver_materia_prima
+
+# Módulos fórmulas
 from crud_formulas.crear_formula import flujo_crear_formula
 from crud_formulas.list_formulas import listar_formulas
 from crud_formulas.update_formula import actualizar_formula
@@ -18,6 +22,8 @@ from crud_formulas.delete_formula import eliminar_formula
 from crud_formulas.optimizar_formula import flujo_optimizar_formula
 from utils.cargar_formula import cargar_formula_por_id
 
+# 🆕 Módulo calidad
+from crud_calidad.vista_calidad import vista_calidad  # Asegúrate de que este archivo exista
 
 # 🔐 Login simple usando Supabase email/password
 def login():
@@ -48,6 +54,7 @@ def login():
         except Exception as e:
             st.error(f"Error de autenticación: {e}")
 
+
 def main():
     st.set_page_config(layout="wide")
 
@@ -72,7 +79,7 @@ def main():
         """, unsafe_allow_html=True)
 
         st.markdown("### Navegación")
-        menu = st.radio("Navegación", ["Formulas", "Materias Primas"], label_visibility="collapsed")
+        menu = st.radio("Navegación", ["Formulas", "Materias Primas", "Calidad"], label_visibility="collapsed")
 
         st.markdown("---")
         st.markdown(f"**Sesión iniciada como:** {st.session_state.get('user_email', '')}")
@@ -87,6 +94,7 @@ def main():
         **Fecha:** 01/07/2025
         """)
 
+    # --- Materias Primas ---
     if menu == "Materias Primas":
         subtarea = st.selectbox("Acción sobre materias primas", ["Ver", "Crear", "Actualizar", "Eliminar"])
 
@@ -100,6 +108,7 @@ def main():
             eliminar_materia_prima()
         return
 
+    # --- Formulas ---
     if menu == "Formulas":
         subtarea = st.selectbox("Acción sobre fórmulas", ["Crear", "Ver", "Actualizar", "Eliminar", "Optimizar"])
 
@@ -117,6 +126,12 @@ def main():
         elif subtarea == "Optimizar":
             flujo_optimizar_formula()
         return
+
+    # --- Calidad ---
+    if menu == "Calidad":
+        vista_calidad()
+        return
+
 
 if __name__ == "__main__":
     main()
