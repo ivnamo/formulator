@@ -16,36 +16,31 @@ from crud_formulas.update_formula import actualizar_formula
 from crud_formulas.delete_formula import eliminar_formula
 from utils.cargar_formula import cargar_formula_por_id
 from crud_formulas.optimizar_formula import flujo_optimizar_formula  # 🆕 nuevo flujo
-from streamlit_javascript import st_javascript
+
 
 # 🔐 Login simple usando Supabase email/password
 def login():
     st.set_page_config(layout="centered")
     st.title("🔐 Iniciar sesión")
 
-    # Intenta capturar los valores directamente desde el DOM con JS
-    email = st_javascript("""
-        const input = window.document.querySelector('input[type="text"]');
-        if (input) input.value;
-        """)
-    password = st_javascript("""
-        const input = window.document.querySelector('input[type="password"]');
-        if (input) input.value;
-        """)
+    with st.form("form_login"):
+        email = st.text_input("Email", key="email_login")
+        password = st.text_input("Contraseña", type="password", key="pass_login")
+        submitted = st.form_submit_button("Entrar")
 
-    # Mostrar los campos (visualmente)
-    st.text_input("Email", key="email_login", value=email or "")
-    st.text_input("Contraseña", type="password", key="pass_login", value=password or "")
+    if submitted:
+        if not email or not password:
+            st.warning("Completa ambos campos.")
+            return
 
-    if st.button("Entrar"):
         try:
             resp = supabase.auth.sign_in_with_password({
-                "email": st.session_state.get("email_login", ""),
-                "password": st.session_state.get("pass_login", "")
+                "email": email,
+                "password": password
             })
             if resp.user:
                 st.session_state.logged_in = True
-                st.session_state.user_email = st.session_state.get("email_login", "")
+                st.session_state.user_email = email
                 st.rerun()
             else:
                 st.error("Credenciales incorrectas.")
