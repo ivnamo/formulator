@@ -22,11 +22,33 @@ def login():
     st.set_page_config(layout="centered")
     st.title("🔐 Iniciar sesión")
 
-    email = st.text_input("Email")
-    password = st.text_input("Contraseña", type="password")
+    # Campos con claves fijas
+    email = st.text_input("Email", key="email_login")
+    password = st.text_input("Contraseña", type="password", key="pass_login")
+
+    # 🔧 JavaScript para forzar que Streamlit detecte autocompletado
+    st.markdown("""
+        <script>
+        setTimeout(function() {
+            const inputEmail = window.parent.document.querySelector('input[id^="email_login"]');
+            const inputPass = window.parent.document.querySelector('input[id^="pass_login"]');
+
+            if (inputEmail && inputEmail.value) {
+                inputEmail.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (inputPass && inputPass.value) {
+                inputPass.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }, 500);
+        </script>
+    """, unsafe_allow_html=True)
+
     if st.button("Entrar"):
         try:
-            resp = supabase.auth.sign_in_with_password({"email": email, "password": password})
+            resp = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
             if resp.user:
                 st.session_state.logged_in = True
                 st.session_state.user_email = email
@@ -35,6 +57,7 @@ def login():
                 st.error("Credenciales incorrectas.")
         except Exception as e:
             st.error(f"Error de autenticación: {e}")
+
 
 def main():
     st.set_page_config(layout="wide")
