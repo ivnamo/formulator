@@ -16,66 +16,45 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
 
     with st.expander("🧪 Filtro avanzado para seleccionar materias primas"):
 
-        # Valores por defecto fijos
+        # Valores por defecto
         precio_min_def = float(df["Precio €/kg"].min())
         precio_max_def = float(df["Precio €/kg"].max())
-        VALORES_DEFECTO = {
-            "nombre_filtro": "",
-            "precio_minmax": (precio_min_def, precio_max_def),
-            "filtro_familias": [],
-            "filtro_columnas": []
-        }
+        columnas_familias = obtener_familias_parametros()
 
+        # Reset seguro
         if st.button("🔄 Resetear filtros"):
-            for k in VALORES_DEFECTO:
-                st.session_state.pop(k, None)
-            st.session_state["reset_filtros_mp"] = False
+            for k in list(st.session_state.keys()):
+                if k.startswith(("nombre_filtro", "precio_minmax", "filtro_")) or k.startswith("slider_"):
+                    st.session_state.pop(k, None)
             st.rerun()
 
-        # Inicializar valores solo si no existen
-        if "nombre_filtro" not in st.session_state:
-            st.session_state["nombre_filtro"] = VALORES_DEFECTO["nombre_filtro"]
-        if "precio_minmax" not in st.session_state:
-            st.session_state["precio_minmax"] = VALORES_DEFECTO["precio_minmax"]
-        if "filtro_familias" not in st.session_state:
-            st.session_state["filtro_familias"] = VALORES_DEFECTO["filtro_familias"]
-        if "filtro_columnas" not in st.session_state:
-            st.session_state["filtro_columnas"] = VALORES_DEFECTO["filtro_columnas"]
-
-        # Widgets
-        nombre_filtro = st.text_input(
-            "Buscar por nombre",
-            value=st.session_state["nombre_filtro"],
-            key="nombre_filtro"
-        )
+        # Filtros
+        nombre_filtro = st.text_input("Buscar por nombre", key="nombre_filtro")
 
         precio_min, precio_max = st.slider(
             "Rango de precio €/kg",
             min_value=precio_min_def,
             max_value=precio_max_def,
-            value=st.session_state["precio_minmax"],
+            value=(precio_min_def, precio_max_def),
             step=0.1,
             key="precio_minmax"
         )
 
-        familias = obtener_familias_parametros()
         familias_sel = st.multiselect(
             "Filtrar por familias presentes",
-            options=list(familias.keys()),
-            default=st.session_state["filtro_familias"],
+            options=list(columnas_familias.keys()),
             key="filtro_familias"
         )
 
-        columnas_tecnicas = [col for sub in familias.values() for col in sub if col in df.columns]
+        columnas_tecnicas = [col for sub in columnas_familias.values() for col in sub if col in df.columns]
 
         columnas_filtrar = st.multiselect(
             "Filtrar por columnas técnicas",
             options=columnas_tecnicas,
-            default=st.session_state["filtro_columnas"],
             key="filtro_columnas"
         )
 
-        # Sliders para columnas técnicas seleccionadas
+        # Filtros por columnas seleccionadas
         filtros_aplicados = []
         for col in columnas_filtrar:
             if col in df.columns:
@@ -99,7 +78,7 @@ def aplicar_filtros_materias_primas(df: pd.DataFrame) -> pd.DataFrame:
 
         if familias_sel:
             columnas_familia = [
-                col for fam in familias_sel for col in familias[fam] if col in df_filtrado.columns
+                col for fam in familias_sel for col in columnas_familias[fam] if col in df_filtrado.columns
             ]
             if columnas_familia:
                 suma_familia = df_filtrado[columnas_familia].fillna(0).sum(axis=1)
