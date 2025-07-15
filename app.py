@@ -10,22 +10,35 @@ from utils.supabase_client import supabase
 from crud_mp.create_materia_prima import crear_materia_prima
 from crud_mp.update_materia_prima import actualizar_materia_prima
 from crud_mp.delete_materia_prima import eliminar_materia_prima
+from crud_mp.ver_materia_prima import ver_materia_prima  # ✅ nuevo
 from crud_formulas.crear_formula import flujo_crear_formula
 from crud_formulas.list_formulas import listar_formulas
 from crud_formulas.update_formula import actualizar_formula
 from crud_formulas.delete_formula import eliminar_formula
+from crud_formulas.optimizar_formula import flujo_optimizar_formula
 from utils.cargar_formula import cargar_formula_por_id
+
 
 # 🔐 Login simple usando Supabase email/password
 def login():
     st.set_page_config(layout="centered")
     st.title("🔐 Iniciar sesión")
 
-    email = st.text_input("Email")
-    password = st.text_input("Contraseña", type="password")
-    if st.button("Entrar"):
+    with st.form("form_login"):
+        email = st.text_input("Email", key="email_login")
+        password = st.text_input("Contraseña", type="password", key="pass_login")
+        submitted = st.form_submit_button("Entrar")
+
+    if submitted:
+        if not email or not password:
+            st.warning("Completa ambos campos.")
+            return
+
         try:
-            resp = supabase.auth.sign_in_with_password({"email": email, "password": password})
+            resp = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
             if resp.user:
                 st.session_state.logged_in = True
                 st.session_state.user_email = email
@@ -75,9 +88,11 @@ def main():
         """)
 
     if menu == "Materias Primas":
-        subtarea = st.selectbox("Acción sobre materias primas", ["Crear", "Actualizar", "Eliminar"])
+        subtarea = st.selectbox("Acción sobre materias primas", ["Ver", "Crear", "Actualizar", "Eliminar"])
 
-        if subtarea == "Crear":
+        if subtarea == "Ver":
+            ver_materia_prima()
+        elif subtarea == "Crear":
             crear_materia_prima()
         elif subtarea == "Actualizar":
             actualizar_materia_prima()
@@ -86,7 +101,7 @@ def main():
         return
 
     if menu == "Formulas":
-        subtarea = st.selectbox("Acción sobre fórmulas", ["Crear", "Actualizar", "Eliminar", "Ver"])
+        subtarea = st.selectbox("Acción sobre fórmulas", ["Crear", "Ver", "Actualizar", "Eliminar", "Optimizar"])
 
         if subtarea == "Crear":
             flujo_crear_formula()
@@ -99,9 +114,9 @@ def main():
             formula_id = listar_formulas(seleccionar=True)
             if formula_id:
                 cargar_formula_por_id(formula_id)
+        elif subtarea == "Optimizar":
+            flujo_optimizar_formula()
         return
-
 
 if __name__ == "__main__":
     main()
-
