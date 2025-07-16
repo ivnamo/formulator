@@ -41,17 +41,20 @@ def cargar_formula_por_id(formula_id: str):
         st.markdown(f"### 🧪 **{nombre}**")
         st.markdown(f"**💰 Precio por kg:** {precio:.2f} €")
 
-        # ✅ Mostrar solo columnas esenciales
+        # 👁 Vista previa (ocultar columnas, no eliminarlas)
         columnas_visibles = ["Materia Prima", "%"]
-        materias_primas = materias_primas[columnas_visibles]
-
-        # 👁 Vista previa
-        materias_vista = materias_primas.rename(columns={"%": "Porcentaje"}).copy()
-        st.markdown(materias_vista.to_html(index=False), unsafe_allow_html=True)
+        if all(col in materias_primas.columns for col in columnas_visibles):
+            materias_vista = materias_primas[columnas_visibles].rename(columns={"%": "Porcentaje"}).copy()
+            st.markdown(materias_vista.to_html(index=False), unsafe_allow_html=True)
+        else:
+            st.warning("No se pueden mostrar columnas visibles esperadas.")
 
         # 📊 Composición
         st.markdown("#### 📊 Composición estimada")
-        columnas_tecnicas = [col for col in data if col not in columnas_visibles and col != "id"]
+        columnas_tecnicas = [
+            col for col in materias_primas.columns
+            if col not in ["Materia Prima", "%", "Precio €/kg", "id"]
+        ]
         precio_calc, composicion = calcular_resultado_formula(materias_primas, columnas_tecnicas)
         composicion = composicion[composicion["Cantidad %"] > 0] if not composicion.empty else pd.DataFrame()
 
@@ -92,5 +95,7 @@ def cargar_formula_por_id(formula_id: str):
                 mime="application/pdf"
             )
 
+    except Exception as e:
+        st.error(f"⚠️ Error al cargar la fórmula: {e}")
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
