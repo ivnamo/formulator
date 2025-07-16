@@ -5,22 +5,37 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
-import qrcode
+from reportlab.lib.units import cm
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 from io import BytesIO
 from PIL import Image
 
-def generar_qr(url: str) -> Image.Image:
+def generar_etiqueta(nombre: str, fecha: str, qr_img: Image.Image, codigo: str = "") -> BytesIO:
     """
-    Genera una imagen QR a partir de una URL.
-
-    Args:
-        url (str): URL que se quiere codificar.
-
-    Returns:
-        PIL.Image.Image: Imagen QR generada.
+    Genera una etiqueta PDF de 5x3 cm con nombre, código y fecha, junto con código QR.
     """
-    qr = qrcode.make(url)
-    img_buffer = BytesIO()
-    qr.save(img_buffer, format='PNG')
-    img_buffer.seek(0)
-    return Image.open(img_buffer)
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=(5 * cm, 3 * cm))  # 5x3 cm
+
+    # Texto (solo valores, sin etiquetas)
+    c.setFont("Helvetica-Bold", 8)
+    y_pos = 75
+    if nombre:
+        c.drawString(10, y_pos, nombre)
+        y_pos -= 15
+    if codigo:
+        c.drawString(10, y_pos, codigo)
+        y_pos -= 15
+    if fecha:
+        c.drawString(10, y_pos, fecha)
+
+    # QR como ImageReader
+    qr_reader = ImageReader(qr_img)
+    c.drawImage(qr_reader, x=5 * cm - 60, y=5, width=55, height=55, mask='auto')
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer
+
