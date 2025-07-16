@@ -39,6 +39,7 @@ def cargar_formula_por_id(formula_id: str):
         fecha_iso = data.get("fecha_creacion", "")[:10]
         fecha_formateada = datetime.strptime(fecha_iso, "%Y-%m-%d").strftime("%d/%m/%Y") if fecha_iso else ""
         codigo = data.get("codigo_calidad", "")
+        st.write("🔍 Código calidad:", codigo)
         materias_primas = pd.DataFrame(json.loads(data["materias_primas"]))
 
         st.markdown(f"### 🧪 **{nombre}**")
