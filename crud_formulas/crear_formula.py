@@ -84,16 +84,21 @@ def flujo_crear_formula():
             if not nombre_formula.strip():
                 st.warning("Debes ingresar un nombre para guardar la fórmula.")
             else:
+                # 🔁 Reconstruir df con columnas completas
+                df_final = df[df["Materia Prima"].isin(df_editado["Materia Prima"])].copy()
+                df_final["%"] = df_editado["%"].values
+
+                # ✅ Reordenar columnas
                 columnas_base = ["Materia Prima", "%", "Precio €/kg"]
                 columnas_tecnicas = [
-                    col for col in df_editado.columns
+                    col for col in df_final.columns
                     if col not in columnas_base and col != "id"
                 ]
                 columnas_ordenadas = columnas_base + columnas_tecnicas
-                df_editado = df_editado[columnas_ordenadas]
+                df_final = df_final[columnas_ordenadas]
 
-                precio, _ = calcular_resultado_formula(df_editado, columnas_filtradas)
-                formula_id = guardar_formula(df_editado, nombre_formula.strip(), precio)
+                precio, _ = calcular_resultado_formula(df_final, columnas_filtradas)
+                formula_id = guardar_formula(df_final, nombre_formula.strip(), precio)
                 url_formula = f"{host_url}/?formula_id={formula_id}"
 
                 qr_img = generar_qr(url_formula)
@@ -104,7 +109,7 @@ def flujo_crear_formula():
 
                 st.markdown("---")
                 st.subheader("📤 Exportar fórmula a Excel")
-                excel_bytes = exportar_formula_excel(df_editado, nombre_formula.strip())
+                excel_bytes = exportar_formula_excel(df_final, nombre_formula.strip())
                 st.download_button(
                     label="⬇️ Descargar Excel",
                     data=excel_bytes,
