@@ -16,7 +16,6 @@ from utils.generar_etiqueta import generar_etiqueta
 from utils.generar_qr import generar_qr
 from streamlit_javascript import st_javascript  # ✅ para URL dinámica
 
-
 def cargar_formula_por_id(formula_id: str):
     """
     Carga y muestra una fórmula en modo solo lectura, a partir del ID en Supabase.
@@ -42,14 +41,9 @@ def cargar_formula_por_id(formula_id: str):
         st.markdown(f"### 🧪 **{nombre}**")
         st.markdown(f"**💰 Precio por kg:** {precio:.2f} €")
 
-        # 🔃 Reordenar columnas
-        columnas_base = ["Materia Prima", "%", "Precio €/kg"]
-        columnas_tecnicas = [
-            col for col in materias_primas.columns
-            if col not in columnas_base and col != "id"
-        ]
-        orden_columnas = columnas_base + columnas_tecnicas
-        materias_primas = materias_primas[orden_columnas]
+        # ✅ Mostrar solo columnas esenciales
+        columnas_visibles = ["Materia Prima", "%"]
+        materias_primas = materias_primas[columnas_visibles]
 
         # 👁 Vista previa
         materias_vista = materias_primas.rename(columns={"%": "Porcentaje"}).copy()
@@ -57,8 +51,10 @@ def cargar_formula_por_id(formula_id: str):
 
         # 📊 Composición
         st.markdown("#### 📊 Composición estimada")
+        columnas_tecnicas = [col for col in data if col not in columnas_visibles and col != "id"]
         precio_calc, composicion = calcular_resultado_formula(materias_primas, columnas_tecnicas)
-        composicion = composicion[composicion["Cantidad %"] > 0]
+        composicion = composicion[composicion["Cantidad %"] > 0] if not composicion.empty else pd.DataFrame()
+
         if not composicion.empty:
             composicion_formateada = composicion.reset_index()
             composicion_formateada.columns = ["Parámetro", "% p/p"]
@@ -66,13 +62,13 @@ def cargar_formula_por_id(formula_id: str):
         else:
             st.info("No hay parámetros significativos en la fórmula.")
 
-        # 📤 Exportar a Excel
+        # 📄 Exportar a Excel
         st.markdown("---")
-        st.subheader("📤 Exportar esta fórmula")
+        st.subheader("📄 Exportar esta fórmula")
         if st.button("⬇️ Exportar a Excel"):
             excel_bytes = exportar_formula_excel(materias_primas, nombre)
             st.download_button(
-                label="📄 Descargar archivo Excel",
+                label="📃 Descargar archivo Excel",
                 data=excel_bytes,
                 file_name=f"{nombre}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -90,7 +86,7 @@ def cargar_formula_por_id(formula_id: str):
             qr_img = generar_qr(url_formula)
             etiqueta_pdf = generar_etiqueta(nombre, fecha, qr_img)
             st.download_button(
-                label="📥 Descargar etiqueta PDF",
+                label="📅 Descargar etiqueta PDF",
                 data=etiqueta_pdf,
                 file_name=f"Etiqueta_{nombre}.pdf",
                 mime="application/pdf"
@@ -98,5 +94,3 @@ def cargar_formula_por_id(formula_id: str):
 
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
-
-
