@@ -9,6 +9,7 @@ import streamlit as st
 import pandas as pd
 import json
 from io import BytesIO
+from datetime import datetime
 from utils.supabase_client import supabase
 from utils.formula_resultados import calcular_resultado_formula
 from utils.exportar_formula import exportar_formula_excel
@@ -35,7 +36,9 @@ def cargar_formula_por_id(formula_id: str):
 
         nombre = data["nombre"]
         precio = data["precio_total"]
-        fecha = data.get("fecha_creacion", "")[:10]
+        fecha_iso = data.get("fecha_creacion", "")[:10]
+        fecha_formateada = datetime.strptime(fecha_iso, "%Y-%m-%d").strftime("%d/%m/%Y") if fecha_iso else ""
+        codigo = data.get("codigo_calidad", "")
         materias_primas = pd.DataFrame(json.loads(data["materias_primas"]))
 
         st.markdown(f"### 🧪 **{nombre}**")
@@ -86,7 +89,7 @@ def cargar_formula_por_id(formula_id: str):
 
         if st.button("Generar etiqueta PDF"):
             qr_img = generar_qr(url_formula)
-            etiqueta_pdf = generar_etiqueta(nombre, fecha, qr_img)
+            etiqueta_pdf = generar_etiqueta(nombre=nombre, fecha=fecha_formateada, qr_img=qr_img, codigo=codigo)
             st.download_button(
                 label="📅 Descargar etiqueta PDF",
                 data=etiqueta_pdf,
@@ -96,4 +99,3 @@ def cargar_formula_por_id(formula_id: str):
 
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
-
