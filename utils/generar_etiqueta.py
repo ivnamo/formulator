@@ -11,17 +11,24 @@ from reportlab.lib.utils import ImageReader
 from io import BytesIO
 from PIL import Image
 
-def generar_etiqueta(nombre: str, fecha: str, qr_img: Image.Image) -> BytesIO:
+def generar_etiqueta(nombre: str, fecha: str, qr_img: Image.Image, codigo: str = "") -> BytesIO:
     """
-    Genera una etiqueta PDF de 5x3 cm con nombre, fecha y código QR.
+    Genera una etiqueta PDF de 5x3 cm con nombre, código y fecha, junto con código QR.
     """
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=(5 * cm, 3 * cm))  # 5x3 cm
 
-    # Texto
+    # Texto (solo valores, sin etiquetas)
     c.setFont("Helvetica-Bold", 8)
-    c.drawString(10, 75, f"Nombre: {nombre}")
-    c.drawString(10, 60, f"Fecha: {fecha}")
+    y_pos = 75
+    if nombre:
+        c.drawString(10, y_pos, nombre)
+        y_pos -= 15
+    if codigo:
+        c.drawString(10, y_pos, codigo)
+        y_pos -= 15
+    if fecha:
+        c.drawString(10, y_pos, fecha)
 
     # QR como ImageReader
     qr_reader = ImageReader(qr_img)
@@ -31,5 +38,3 @@ def generar_etiqueta(nombre: str, fecha: str, qr_img: Image.Image) -> BytesIO:
     c.save()
     buffer.seek(0)
     return buffer
-
-
