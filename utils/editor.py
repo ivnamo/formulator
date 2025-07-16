@@ -16,10 +16,13 @@ def mostrar_editor_formula(df, seleccionadas):
     if df_filtrado.empty:
         return pd.DataFrame(), 0.0
 
-    # 🧪 Mostrar solo estas columnas en AgGrid
-    columnas_vista = ["Materia Prima", "%"]
+    # ✅ Mostrar más columnas en AgGrid (no solo %)
+    columnas_vista = ["Materia Prima", "%", "Precio €/kg"] + [
+        col for col in df_filtrado.columns
+        if col not in ["Materia Prima", "%", "Precio €/kg", "id"]
+    ]
 
-    # 🔧 Configurar el editor visual
+    # 🔧 Configurar el editor visual (solo % editable)
     gb = GridOptionsBuilder.from_dataframe(df_filtrado[columnas_vista])
     gb.configure_default_column(resizable=True, filter=False, sortable=False)
     gb.configure_column("Materia Prima", editable=False, rowDrag=True, width=240, filter=False)
@@ -41,13 +44,13 @@ def mostrar_editor_formula(df, seleccionadas):
     df_filtrado["%"] = grid_response["data"]["%"].values
     df_filtrado.reset_index(drop=True, inplace=True)
 
-    # Mostrar tabla secundaria con solo % (opcional)
+    # Tabla secundaria (por claridad)
     df_vista = df_filtrado[["Materia Prima", "%"]].rename(columns={"%": "Porcentaje"})
     st.dataframe(df_vista, use_container_width=True)
 
     total_pct = df_filtrado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
-    st.code(f"Columnas devueltas: {df_filtrado.columns.tolist()}")
+    #st.code(f"Columnas devueltas: {df_filtrado.columns.tolist()}")
 
     return df_filtrado, total_pct
 
