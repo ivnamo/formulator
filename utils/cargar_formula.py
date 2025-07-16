@@ -81,23 +81,23 @@ def cargar_formula_por_id(formula_id: str):
 
         # 🏷️ Generar etiqueta PDF
         st.markdown("---")
-        #st.subheader("🏷️ Generar etiqueta PDF 5×3 cm")
         st.markdown("### 🏷️ Generar etiqueta PDF 5×3 cm", unsafe_allow_html=True)
-
 
         # ✅ Captura segura del host actual con fallback
         host_url = st_javascript("window.location.origin")
         url_formula = f"{host_url}/?formula_id={formula_id}"
 
-        if st.button("Generar etiqueta PDF"):
-            qr_img = generar_qr(url_formula)
-            etiqueta_pdf = generar_etiqueta(nombre=nombre, fecha=fecha_formateada, qr_img=qr_img, codigo=codigo)
-            st.download_button(
-                label="📅 Descargar etiqueta PDF",
-                data=etiqueta_pdf,
-                file_name=f"Etiqueta_{nombre}.pdf",
-                mime="application/pdf"
-            )
+        # 🔄 Generar automáticamente el QR y el PDF sin esperar botón
+        qr_img = generar_qr(url_formula)
+        etiqueta_pdf = generar_etiqueta(nombre=nombre, fecha=fecha_formateada, qr_img=qr_img, codigo=codigo)
+
+        # ⬇️ Botón de descarga directo
+        st.download_button(
+            label="📅 Descargar etiqueta PDF",
+            data=etiqueta_pdf,
+            file_name=f"Etiqueta_{nombre}.pdf",
+            mime="application/pdf"
+        )
 
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
