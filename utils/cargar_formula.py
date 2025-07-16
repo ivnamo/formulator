@@ -50,7 +50,7 @@ def cargar_formula_por_id(formula_id: str):
             st.warning(f"No se pudo cargar el código de calidad: {e}")
 
         st.markdown(f"### 🧪 **{nombre}**")
-        st.markdown(f"## 🏷️ **{codigo}**")
+        st.markdown(f"#### 🏷️ **{codigo}**")
         st.markdown(f"**💰 Precio por kg:** {precio:.2f} €")
 
         # 👁 Vista previa (ocultar columnas, no eliminarlas)
