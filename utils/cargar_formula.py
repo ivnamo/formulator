@@ -38,11 +38,19 @@ def cargar_formula_por_id(formula_id: str):
         precio = data["precio_total"]
         fecha_iso = data.get("fecha_creacion", "")[:10]
         fecha_formateada = datetime.strptime(fecha_iso, "%Y-%m-%d").strftime("%d/%m/%Y") if fecha_iso else ""
-        codigo = data.get("codigo_calidad", "")
-        st.write("🔍 Código calidad:", codigo)
         materias_primas = pd.DataFrame(json.loads(data["materias_primas"]))
 
+        # 🔁 Obtener código desde tabla "calidad"
+        codigo = ""
+        try:
+            calidad_resp = supabase.table("calidad").select("codigo").eq("formula_id", formula_id).limit(1).execute()
+            if calidad_resp.data and len(calidad_resp.data) > 0:
+                codigo = calidad_resp.data[0].get("codigo", "")
+        except Exception as e:
+            st.warning(f"No se pudo cargar el código de calidad: {e}")
+
         st.markdown(f"### 🧪 **{nombre}**")
+        st.markdown(f"### **{codigo}**")
         st.markdown(f"**💰 Precio por kg:** {precio:.2f} €")
 
         # 👁 Vista previa (ocultar columnas, no eliminarlas)
