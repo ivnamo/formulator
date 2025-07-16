@@ -47,6 +47,7 @@ def mostrar_editor_formula(df, seleccionadas):
 
     total_pct = df_filtrado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")
+    st.code(f"Columnas devueltas: {df_filtrado.columns.tolist()}")
 
     return df_filtrado, total_pct
 
