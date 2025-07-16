@@ -90,7 +90,7 @@ def cargar_formula_por_id(formula_id: str):
 
         # 🏷️ Generar etiqueta PDF
         st.markdown("---")
-        st.markdown("### 🏷️ Generar etiqueta PDF 5×3 cm", unsafe_allow_html=True)
+        st.markdown("### 🏷️ Generar etiqueta PDF", unsafe_allow_html=True)
 
         # ✅ Captura segura del host actual con fallback
         host_url = st_javascript("window.location.origin")
