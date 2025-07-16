@@ -9,6 +9,15 @@ import streamlit as st
 import pandas as pd
 from utils.supabase_client import supabase
 
+def listar_formulas_dataframe():
+    """Devuelve un DataFrame con todas las fórmulas sin renderizar nada en pantalla."""
+    try:
+        response = supabase.table("formulas").select("id,nombre").execute()
+        return pd.DataFrame(response.data)
+    except Exception as e:
+        st.error(f"❌ Error al cargar las fórmulas: {e}")
+        return pd.DataFrame()
+
 
 def listar_formulas(seleccionar: bool = True):
     """Muestra las fórmulas guardadas y opcionalmente permite seleccionar una."""

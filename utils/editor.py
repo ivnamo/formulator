@@ -16,22 +16,14 @@ def mostrar_editor_formula(df, seleccionadas):
     if df_filtrado.empty:
         return pd.DataFrame(), 0.0
 
-    columnas_default = obtener_familias_parametros()
-    columnas_composicion = [col for sub in columnas_default.values() for col in sub]
-
-    columnas_base = ["Materia Prima", "%", "Precio €/kg"]
-    columnas_tecnicas = [col for col in columnas_composicion if col in df_filtrado.columns]
-    columnas_mostrar = columnas_base + columnas_tecnicas
+    # Solo mostrar columnas básicas: Materia Prima y %
+    columnas_mostrar = ["Materia Prima", "%"]
 
     gb = GridOptionsBuilder.from_dataframe(df_filtrado[columnas_mostrar])
     gb.configure_default_column(resizable=True, filter=False, sortable=False)
 
     gb.configure_column("Materia Prima", editable=False, rowDrag=True, width=240, filter=False)
-    gb.configure_column("Precio €/kg", editable=False, width=100, filter=False)
     gb.configure_column("%", editable=True, width=70, filter=False)
-
-    for col in columnas_tecnicas:
-        gb.configure_column(col, editable=False, width=70, filter=False)
 
     gb.configure_grid_options(rowDragManaged=True)
 
@@ -59,11 +51,10 @@ def mostrar_editor_formula(df, seleccionadas):
 
     df_editado.reset_index(drop=True, inplace=True)
 
-    # ✅ Reordenar columnas del DataFrame editado para mantener consistencia
+    # Reordenar columnas para mantener solo las visibles
     columnas_ordenadas = [col for col in columnas_mostrar if col in df_editado.columns]
     df_editado = df_editado[columnas_ordenadas]
 
-    # Vista con "Porcentaje" renombrado
     df_vista = df_editado.rename(columns={"%": "Porcentaje"}).copy()
     st.dataframe(df_vista, use_container_width=True)
 
