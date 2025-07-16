@@ -7,6 +7,7 @@ from crud_formulas.list_formulas import listar_formulas
 from crud_calidad.create_calidad import crear_registro_calidad
 from crud_calidad.list_calidad import listar_registros_calidad
 from crud_calidad.update_calidad import actualizar_estado_calidad
+from crud_formulas.list_formulas import listar_formulas_dataframe
 
 
 def vista_calidad():
@@ -45,7 +46,8 @@ def vista_calidad():
         df = df.sort_values("fecha_envio", ascending=False)
 
         # Obtener nombres de fórmulas
-        formulas_df = listar_formulas(seleccionar=False)
+        
+        formulas_df = listar_formulas_dataframe()
         if isinstance(formulas_df, pd.DataFrame):
             df = df.merge(formulas_df, left_on="formula_id", right_on="id", how="left", suffixes=('', '_formula'))
             df["nombre_formula"] = df["nombre"]
