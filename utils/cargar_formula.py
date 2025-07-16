@@ -91,15 +91,12 @@ def cargar_formula_por_id(formula_id: str):
         # 🏷️ Generar etiqueta PDF
         st.markdown("---")
         st.subheader("🏷️ Generar etiqueta PDF")
-
         # ✅ Captura segura del host actual con fallback
         host_url = st_javascript("window.location.origin")
         url_formula = f"{host_url}/?formula_id={formula_id}"
-
         # 🔄 Generar automáticamente el QR y el PDF sin esperar botón
         qr_img = generar_qr(url_formula)
         etiqueta_pdf = generar_etiqueta(nombre=nombre, fecha=fecha_formateada, qr_img=qr_img, codigo=codigo)
-
         # ⬇️ Botón de descarga directo
         st.download_button(
             label="📅 Descargar etiqueta PDF",
