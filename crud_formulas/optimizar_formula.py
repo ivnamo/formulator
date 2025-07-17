@@ -51,7 +51,6 @@ def flujo_optimizar_formula():
             restricciones_min = {k: v["min"] for k, v in restricciones.items()}
             restricciones_max = {k: v["max"] for k, v in restricciones.items()}
             df_opt, costo = optimizar_simplex(df_seleccion, columnas_tecnicas, restricciones_min, restricciones_max)
-            df_opt = df_opt[df_opt["%"] > 1e-4].copy()  # ✅ eliminar trazas cercanas a cero
 
             st.success(f"✅ Fórmula optimizada. Costo total: {costo:.2f} €/kg")
             st.dataframe(df_opt[["Materia Prima", "%", "Precio €/kg"] + columnas_tecnicas])
