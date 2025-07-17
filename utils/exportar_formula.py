@@ -3,6 +3,55 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from io import BytesIO
 
+def exportar_hoja_trabajo_excel(df: pd.DataFrame, nombre_formula: str, codigo: str = "", fecha: str = "", logo_path: str = "logo.png") -> BytesIO:
+    wb = Workbook()
+    ws = wb.active
+
+    # Insertar logo en A1 (3x5 cm aprox)
+    try:
+        logo = XLImage(logo_path)
+        logo.width = 150  # ~5cm
+        logo.height = 90  # ~3cm
+        ws.add_image(logo, "A1")
+    except Exception as e:
+        print(f"Error cargando logo: {e}")
+
+    # Título en C3
+    titulo = nombre_formula
+    if codigo:
+        titulo += f" - MUESTRA: {codigo}"
+    ws.cell(row=3, column=3, value=titulo)
+
+    # Fecha en H3 (columna 8)
+    if fecha:
+        ws.cell(row=3, column=8, value=f"FECHA: {fecha}")
+
+    # Encabezados de tabla
+    ws.cell(row=5, column=1, value="Órden de adición")
+    ws.cell(row=5, column=4, value="Cantidad % peso")
+
+    # Cargar ingredientes y porcentajes
+    start_row = 6
+    for idx, row in df.iterrows():
+        ws.cell(row=start_row + idx, column=1, value=idx + 1)  # Órden
+        ws.cell(row=start_row + idx, column=3, value=row.get("Materia Prima", ""))
+        ws.cell(row=start_row + idx, column=4, value=row.get("%", 0))
+
+    # Fila final con Densidad y pH
+    end_data_row = start_row + len(df)
+    ws.cell(row=end_data_row + 1, column=4, value="Densidad")
+    ws.cell(row=end_data_row + 2, column=4, value="pH")
+
+    # Ajuste de ancho de columnas
+    for col in range(1, 6):
+        ws.column_dimensions[get_column_letter(col)].width = 18
+
+    # Guardar a BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output
+
 def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     wb = Workbook()
     ws = wb.active
