@@ -13,7 +13,7 @@ from datetime import datetime
 from utils.supabase_client import supabase
 from utils.formula_resultados import calcular_resultado_formula
 from utils.exportar_formula import exportar_formula_excel
-from utils.exportar_hoja_trabajo import exportar_hoja_trabajo_excel
+from utils.exportar_formula import exportar_hoja_trabajo_excel
 from utils.generar_etiqueta import generar_etiqueta
 from utils.generar_qr import generar_qr
 from streamlit_javascript import st_javascript
