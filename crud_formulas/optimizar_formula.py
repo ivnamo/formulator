@@ -57,7 +57,11 @@ def flujo_optimizar_formula():
 
             st.markdown("### 📊 Composición de la fórmula optimizada")
             _, composicion = calcular_resultado_formula(df_opt, columnas_tecnicas)
-            mostrar_resultados(df_opt, columnas_tecnicas)
+            columnas_mayor_0 = [
+                col for col in columnas_tecnicas
+                if (df_opt[col] * df_opt["%"] / 100).sum() > 0
+            ]
+            mostrar_resultados(df_opt, columnas_mayor_0)
 
         except Exception as e:
             st.error(f"❌ Error en la optimización: {e}")
