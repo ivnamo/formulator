@@ -11,7 +11,7 @@ def exportar_hoja_trabajo_excel(df: pd.DataFrame, nombre_formula: str, codigo: s
 
     # Insertar logo desde URL pública (3x5 cm aprox)
     try:
-        logo_url = "https://raw.githubusercontent.com/ivnamo/formulator/main/logo.png"
+        logo_url = "https://raw.githubusercontent.com/ivnamo/formulator/main/logonegro.png"
         response = requests.get(logo_url)
         if response.status_code == 200:
             logo_bytes = BytesIO(response.content)
