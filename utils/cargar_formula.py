@@ -13,9 +13,10 @@ from datetime import datetime
 from utils.supabase_client import supabase
 from utils.formula_resultados import calcular_resultado_formula
 from utils.exportar_formula import exportar_formula_excel
+from utils.exportar_formula import exportar_hoja_trabajo_excel
 from utils.generar_etiqueta import generar_etiqueta
 from utils.generar_qr import generar_qr
-from streamlit_javascript import st_javascript  # ✅ para URL dinámica
+from streamlit_javascript import st_javascript
 
 def cargar_formula_por_id(formula_id: str):
     """
@@ -88,16 +89,28 @@ def cargar_formula_por_id(formula_id: str):
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
+        # 🆕 Exportar hoja de trabajo Excel
+        excel_trabajo = exportar_hoja_trabajo_excel(
+            df=materias_primas,
+            nombre_formula=nombre,
+            codigo=codigo,
+            fecha=fecha_formateada,
+            logo_path="/mnt/data/logo.png"
+        )
+        st.download_button(
+            label="🧪 Descargar hoja de trabajo Excel",
+            data=excel_trabajo,
+            file_name=f"HojaTrabajo_{codigo}_{nombre}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
         # 🏷️ Generar etiqueta PDF
         st.markdown("---")
         st.subheader("🏷️ Generar etiqueta PDF")
-        # ✅ Captura segura del host actual con fallback
         host_url = st_javascript("window.location.origin")
         url_formula = f"{host_url}/?formula_id={formula_id}"
-        # 🔄 Generar automáticamente el QR y el PDF sin esperar botón
         qr_img = generar_qr(url_formula)
         etiqueta_pdf = generar_etiqueta(nombre=nombre, fecha=fecha_formateada, qr_img=qr_img, codigo=codigo)
-        # ⬇️ Botón de descarga directo
         st.download_button(
             label="📅 Descargar etiqueta PDF",
             data=etiqueta_pdf,
@@ -107,3 +120,4 @@ def cargar_formula_por_id(formula_id: str):
 
     except Exception as e:
         st.error(f"⚠️ Error al cargar la fórmula: {e}")
+

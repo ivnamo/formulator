@@ -1,7 +1,67 @@
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
+from openpyxl.drawing.image import Image as XLImage
 from io import BytesIO
+import requests
+
+def exportar_hoja_trabajo_excel(df: pd.DataFrame, nombre_formula: str, codigo: str = "", fecha: str = "", logo_path: str = "logo.png") -> BytesIO:
+    wb = Workbook()
+    ws = wb.active
+
+    # Ajustar altura de la primera fila a 4 cm (~113 puntos)
+    ws.row_dimensions[1].height = 113
+
+    # Insertar logo desde URL pública en A1 (3x5 cm aprox)
+    try:
+        logo_url = "https://raw.githubusercontent.com/ivnamo/formulator/main/logonegro.png"
+        response = requests.get(logo_url)
+        if response.status_code == 200:
+            logo_bytes = BytesIO(response.content)
+            logo = XLImage(logo_bytes)
+            logo.width = 150  # ~5cm
+            logo.height = 90  # ~3cm
+            ws.add_image(logo, "A1")
+        else:
+            print("⚠️ No se pudo descargar el logo desde GitHub.")
+    except Exception as e:
+        print(f"⚠️ Error cargando logo: {e}")
+
+    # Título en C3
+    titulo = nombre_formula
+    if codigo:
+        titulo += f" - MUESTRA: {codigo}"
+    ws.cell(row=3, column=3, value=titulo)
+
+    # Fecha en H3 (columna 8)
+    if fecha:
+        ws.cell(row=3, column=8, value=f"FECHA: {fecha}")
+
+    # Encabezados de tabla
+    ws.cell(row=5, column=1, value="Órden de adición")
+    ws.cell(row=5, column=4, value="Cantidad % peso")
+
+    # Cargar ingredientes y porcentajes
+    start_row = 6
+    for idx, row in df.iterrows():
+        ws.cell(row=start_row + idx, column=1, value=idx + 1)  # Órden
+        ws.cell(row=start_row + idx, column=3, value=row.get("Materia Prima", ""))
+        ws.cell(row=start_row + idx, column=4, value=row.get("%", 0))
+
+    # Fila final con Densidad y pH
+    end_data_row = start_row + len(df)
+    ws.cell(row=end_data_row + 1, column=4, value="Densidad")
+    ws.cell(row=end_data_row + 2, column=4, value="pH")
+
+    # Ajuste de ancho de columnas
+    for col in range(1, 6):
+        ws.column_dimensions[get_column_letter(col)].width = 18
+
+    # Guardar a BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output
 
 def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     wb = Workbook()
@@ -49,4 +109,5 @@ def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     wb.save(output)
     output.seek(0)
     return output
+
 
