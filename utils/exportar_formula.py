@@ -3,19 +3,26 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.drawing.image import Image as XLImage
 from io import BytesIO
+import requests
 
 def exportar_hoja_trabajo_excel(df: pd.DataFrame, nombre_formula: str, codigo: str = "", fecha: str = "", logo_path: str = "logo.png") -> BytesIO:
     wb = Workbook()
     ws = wb.active
 
-    # Insertar logo en A1 (3x5 cm aprox)
+    # Insertar logo desde URL pública (3x5 cm aprox)
     try:
-        logo = XLImage(logo_path)
-        logo.width = 150  # ~5cm
-        logo.height = 90  # ~3cm
-        ws.add_image(logo, "A1")
+        logo_url = "https://raw.githubusercontent.com/ivnamo/formulator/main/logo.png"
+        response = requests.get(logo_url)
+        if response.status_code == 200:
+            logo_bytes = BytesIO(response.content)
+            logo = XLImage(logo_bytes)
+            logo.width = 150  # ~5cm
+            logo.height = 90  # ~3cm
+            ws.add_image(logo, "A1")
+        else:
+            print("⚠️ No se pudo descargar el logo desde GitHub.")
     except Exception as e:
-        print(f"Error cargando logo: {e}")
+        print(f"⚠️ Error cargando logo: {e}")
 
     # Título en C3
     titulo = nombre_formula
@@ -99,4 +106,5 @@ def exportar_formula_excel(df: pd.DataFrame, nombre_formula: str) -> BytesIO:
     wb.save(output)
     output.seek(0)
     return output
+
 
