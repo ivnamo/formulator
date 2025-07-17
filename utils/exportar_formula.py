@@ -9,7 +9,10 @@ def exportar_hoja_trabajo_excel(df: pd.DataFrame, nombre_formula: str, codigo: s
     wb = Workbook()
     ws = wb.active
 
-    # Insertar logo desde URL pública (3x5 cm aprox)
+    # Ajustar altura de la primera fila a 4 cm (~113 puntos)
+    ws.row_dimensions[1].height = 113
+
+    # Insertar logo desde URL pública en A1 (3x5 cm aprox)
     try:
         logo_url = "https://raw.githubusercontent.com/ivnamo/formulator/main/logonegro.png"
         response = requests.get(logo_url)
