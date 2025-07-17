@@ -100,7 +100,7 @@ def cargar_formula_por_id(formula_id: str):
         st.download_button(
             label="🧪 Descargar hoja de trabajo Excel",
             data=excel_trabajo,
-            file_name=f"HojaTrabajo_{nombre}.xlsx",
+            file_name=f"HojaTrabajo_{codigo}_{nombre}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
