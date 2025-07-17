@@ -1,6 +1,7 @@
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
+from openpyxl.drawing.image import Image as XLImage
 from io import BytesIO
 
 def exportar_hoja_trabajo_excel(df: pd.DataFrame, nombre_formula: str, codigo: str = "", fecha: str = "", logo_path: str = "logo.png") -> BytesIO:
