@@ -1,21 +1,13 @@
-# ------------------------------------------------------------------------------
-# FORMULATOR – Uso exclusivo de Iván Navarro
-# Todos los derechos reservados © 2025
-# Este archivo forma parte de un software no libre y no está autorizado su uso
-# ni distribución sin consentimiento expreso y por escrito del autor.
-# ------------------------------------------------------------------------------
-
-import streamlit as st
-import pandas as pd
 from utils.supabase_client import supabase
 from utils.editor import mostrar_editor_formula
 from utils.resultados import mostrar_resultados
 from utils.families import obtener_familias_parametros
 from utils.formula_resultados import calcular_resultado_formula
 from utils.guardar_formula import guardar_formula
-from utils.generar_qr import generar_qr
-from utils.exportar_formula import exportar_formula_excel
-from streamlit_javascript import st_javascript
+from streamlit_javascript import st_javascript  # lo mantenemos por ahora
+
+import streamlit as st
+import pandas as pd
 
 def flujo_crear_formula():
     """Interfaz para crear y guardar nuevas fórmulas."""
@@ -99,20 +91,6 @@ def flujo_crear_formula():
 
                 precio, _ = calcular_resultado_formula(df_final, columnas_filtradas)
                 formula_id = guardar_formula(df_final, nombre_formula.strip(), precio)
-                url_formula = f"{host_url}/?formula_id={formula_id}"
-
-                qr_img = generar_qr(url_formula)
 
                 st.success("✅ Fórmula guardada correctamente.")
-                st.image(qr_img, caption="Código QR para esta fórmula", use_container_width=False)
-                st.code(url_formula, language="markdown")
 
-                st.markdown("---")
-                st.subheader("📤 Exportar fórmula a Excel")
-                excel_bytes = exportar_formula_excel(df_final, nombre_formula.strip())
-                st.download_button(
-                    label="⬇️ Descargar Excel",
-                    data=excel_bytes,
-                    file_name=f"{nombre_formula.strip()}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
