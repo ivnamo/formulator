@@ -29,7 +29,7 @@ def flujo_crear_formula():
 
     seleccionadas = st.multiselect(
         "Busca y selecciona las materias primas",
-        options=df["Materia Prima"].dropna().tolist(),
+        options=sorted(df["Materia Prima"].dropna().tolist()),
         help="Puedes escribir para buscar por nombre",
         key="mp_crear",
     )
