@@ -5,7 +5,7 @@ from openpyxl.drawing.image import Image as XLImage
 from io import BytesIO
 import requests
 
-def exportar_hoja_trabajo_excel(df: pd.DataFrame, nombre_formula: str, codigo: str = "", fecha: str = "", logo_path: str = "logo.png") -> BytesIO:
+def exportar_hoja_trabajo_excel(df: pd.DataFrame, nombre_formula: str, codigo: str = "", fecha: str = "", logo_path: str = "logonegro.png") -> BytesIO:
     wb = Workbook()
     ws = wb.active
 
@@ -35,7 +35,7 @@ def exportar_hoja_trabajo_excel(df: pd.DataFrame, nombre_formula: str, codigo: s
 
     # Fecha en H3 (columna 8)
     if fecha:
-        ws.cell(row=3, column=8, value=f"FECHA: {fecha}")
+        ws.cell(row=3, column=5, value=f"FECHA: {fecha}")
 
     # Encabezados de tabla
     ws.cell(row=5, column=1, value="Órden de adición")
