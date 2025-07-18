@@ -22,7 +22,7 @@ def eliminar_formula():
             try:
                 supabase.table("formulas").delete().eq("id", formula_id).execute()
                 st.success("Fórmula eliminada correctamente.")
-                st.experimental_rerun()
+                st.rerun()
             except Exception as e:
                 st.error(f"❌ Error al eliminar: {e}")
         else:
