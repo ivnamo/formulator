@@ -1,6 +1,8 @@
 # ------------------------------------------------------------------------------
-# FORMULATOR – Flujo tipo "wizard" para crear fórmulas paso a paso
-# Uso exclusivo de Iván Navarro – © 2025
+# FORMULATOR – Uso exclusivo de Iván Navarro
+# Todos los derechos reservados © 2025
+# Este archivo forma parte de un software no libre y no está autorizado su uso
+# ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
 import streamlit as st
@@ -10,15 +12,14 @@ from utils.families import obtener_familias_parametros
 from utils.formula_resultados import calcular_resultado_formula
 from utils.editor import mostrar_editor_formula
 from utils.guardar_formula import guardar_formula
-from utils.generar_qr import generar_qr
 from utils.exportar_formula import exportar_formula_excel
 from streamlit_javascript import st_javascript
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 
 def wizard_crear_formula():
     st.title("🧪 Crear nueva fórmula paso a paso")
 
-    # Inicializar estado
     if "paso_formula" not in st.session_state:
         st.session_state.paso_formula = 1
         st.session_state.datos_formula = {}
@@ -26,10 +27,11 @@ def wizard_crear_formula():
     paso = st.session_state.paso_formula
     datos = st.session_state.datos_formula
 
-    # Cargar materias primas
+    # Cargar materias primas ordenadas alfabéticamente
     response = supabase.table("materias_primas").select("*").execute()
     df_all = pd.DataFrame(response.data)
     df_all["%"] = 0.0
+    df_all.sort_values("Materia Prima", inplace=True)
 
     if df_all.empty:
         st.error("No hay materias primas disponibles.")
@@ -37,29 +39,51 @@ def wizard_crear_formula():
 
     st.markdown(f"### Paso {paso} de 5")
 
+    # Paso 1 – Selección de materias primas con persistencia
     if paso == 1:
         st.subheader("1️⃣ Selección de materias primas")
+
         seleccionadas = st.multiselect(
             "Selecciona materias primas",
             df_all["Materia Prima"].dropna().tolist(),
+            default=datos.get("seleccionadas", []),
             key="wizard_sel_mp"
         )
+        datos["seleccionadas"] = seleccionadas
+
         if seleccionadas:
-            datos["seleccionadas"] = seleccionadas
             if st.button("➡️ Siguiente"):
                 st.session_state.paso_formula = 2
         else:
             st.info("Selecciona al menos una materia prima para continuar.")
 
+    # Paso 2 – Ordenar con AgGrid
     elif paso == 2:
         st.subheader("2️⃣ Ordenar materias primas")
-        if "seleccionadas" not in datos:
+
+        if "seleccionadas" not in datos or not datos["seleccionadas"]:
             st.warning("⚠️ No hay materias primas seleccionadas.")
             return
 
         seleccionadas = datos["seleccionadas"]
-        ordenadas = st.data_editor(pd.DataFrame({"Materia Prima": seleccionadas}), num_rows="dynamic")
-        orden_final = ordenadas["Materia Prima"].dropna().tolist()
+        df_orden = pd.DataFrame({"Materia Prima": seleccionadas})
+
+        gb = GridOptionsBuilder.from_dataframe(df_orden)
+        gb.configure_column("Materia Prima", editable=False, rowDrag=True)
+        gb.configure_grid_options(rowDragManaged=True)
+        grid_options = gb.build()
+
+        grid_response = AgGrid(
+            df_orden,
+            gridOptions=grid_options,
+            update_mode=GridUpdateMode.MODEL_CHANGED,
+            height=300,
+            fit_columns_on_grid_load=True,
+            allow_unsafe_jscode=True,
+            theme="streamlit"
+        )
+
+        orden_final = grid_response["data"]["Materia Prima"].tolist()
         datos["ordenadas"] = orden_final
 
         col1, col2 = st.columns(2)
@@ -73,6 +97,7 @@ def wizard_crear_formula():
             else:
                 st.warning("Debes mantener al menos una materia prima ordenada.")
 
+    # Paso 3 – Asignar %
     elif paso == 3:
         st.subheader("3️⃣ Asignar porcentajes")
         ordenadas = datos.get("ordenadas", [])
@@ -91,6 +116,7 @@ def wizard_crear_formula():
             else:
                 st.warning("Asigna porcentajes antes de continuar.")
 
+    # Paso 4 – Revisión
     elif paso == 4:
         st.subheader("4️⃣ Revisión de resultados")
         df_editado = datos.get("df_editado")
@@ -123,11 +149,11 @@ def wizard_crear_formula():
             if st.button("➡️ Siguiente"):
                 st.session_state.paso_formula = 5
 
+    # Paso 5 – Guardar fórmula (sin exportar ni QR)
     elif paso == 5:
-        st.subheader("5️⃣ Guardar y exportar")
+        st.subheader("5️⃣ Guardar fórmula")
         df_final = datos.get("df_editado")
         precio = datos.get("precio_total", 0)
-        columnas = datos.get("columnas_finales", [])
 
         nombre = st.text_input("Nombre de la fórmula", key="wizard_nombre_formula")
 
@@ -140,24 +166,11 @@ def wizard_crear_formula():
                 columnas_ordenadas = columnas_base + columnas_tecnicas
                 df_final = df_final[columnas_ordenadas]
 
-                formula_id = guardar_formula(df_final, nombre.strip(), precio)
-                url = st_javascript("window.location.origin")
-                qr = generar_qr(f"{url}/?formula_id={formula_id}")
-
+                guardar_formula(df_final, nombre.strip(), precio)
                 st.success("✅ Fórmula guardada correctamente.")
-                st.image(qr, caption="Código QR", use_container_width=False)
-                st.code(f"{url}/?formula_id={formula_id}")
-
-                st.subheader("⬇️ Exportar fórmula")
-                excel = exportar_formula_excel(df_final, nombre.strip())
-                st.download_button(
-                    label="Descargar Excel",
-                    data=excel,
-                    file_name=f"{nombre.strip()}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
 
         st.divider()
         if st.button("🔄 Reiniciar flujo"):
             st.session_state.paso_formula = 1
             st.session_state.datos_formula = {}
+
