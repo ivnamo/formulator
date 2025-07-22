@@ -5,9 +5,9 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
-
 import streamlit as st
 from utils.supabase_client import supabase
+from utils.families import obtener_familias_parametros  # ✅ Importar familias
 
 def crear_materia_prima():
     st.subheader("➕ Crear nueva materia prima")
@@ -22,10 +22,16 @@ def crear_materia_prima():
                 st.warning("Debes ingresar un nombre.")
             else:
                 try:
-                    supabase.table("materias_primas").insert({
+                    # ✅ Inicializar todos los parámetros técnicos a 0.0
+                    familias = obtener_familias_parametros()
+                    columnas_tecnicas = [col for sub in familias.values() for col in sub]
+                    campos = {col: 0.0 for col in columnas_tecnicas}
+                    campos.update({
                         "Materia Prima": nombre.upper(),
                         "Precio €/kg": precio
-                    }).execute()
+                    })
+
+                    supabase.table("materias_primas").insert(campos).execute()
                     st.success("Materia prima creada correctamente.")
                 except Exception as e:
                     st.error(f"❌ Error al crear: {e}")
