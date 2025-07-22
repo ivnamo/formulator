@@ -1,8 +1,8 @@
+
 # ------------------------------------------------------------------------------
 # FORMULATOR – Uso exclusivo de Iván Navarro
 # Todos los derechos reservados © 2025
-# Este archivo forma parte de un software no libre y no está autorizado su uso
-# ni distribución sin consentimiento expreso y por escrito del autor.
+# Este archivo contiene el flujo corregido del wizard para crear fórmulas.
 # ------------------------------------------------------------------------------
 
 import streamlit as st
@@ -19,13 +19,18 @@ def wizard_crear_formula():
     st.title("🧪 Crear nueva fórmula paso a paso")
 
     # Inicialización de estado
-    if "paso_formula" not in st.session_state:
-        st.session_state.paso_formula = 1
-    if "datos_formula" not in st.session_state:
-        st.session_state.datos_formula = {}
+    if "wizard" not in st.session_state:
+        st.session_state.wizard = {
+            "paso": 1,
+            "seleccionadas": [],
+            "ordenadas": [],
+            "df_editado": pd.DataFrame(),
+            "total_pct": 0.0,
+            "precio_total": 0.0,
+            "columnas_finales": []
+        }
 
-    paso = st.session_state.paso_formula
-    datos = st.session_state.datos_formula
+    w = st.session_state.wizard
 
     # Cargar materias primas
     response = supabase.table("materias_primas").select("*").execute()
@@ -37,154 +42,116 @@ def wizard_crear_formula():
         st.error("No hay materias primas disponibles.")
         return
 
-    st.markdown(f"### Paso {paso} de 5")
+    st.markdown(f"### Paso {w['paso']} de 5")
 
-    # Paso 1 – Selección de materias primas
-    if paso == 1:
+    # Paso 1 – Selección
+    if w["paso"] == 1:
         st.subheader("1️⃣ Selección de materias primas")
-
-        seleccionadas = st.multiselect(
+        nuevas = st.multiselect(
             "Selecciona materias primas",
             options=df_all["Materia Prima"].tolist(),
-            default=datos.get("seleccionadas", [])
+            default=w["seleccionadas"]
         )
-        datos["seleccionadas"] = seleccionadas
-
+        if nuevas != w["seleccionadas"]:
+            w["seleccionadas"] = nuevas
+            w["ordenadas"] = nuevas  # sincroniza orden inicial
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("➡️ Siguiente"):
-                if seleccionadas:
-                    st.session_state.paso_formula = 2
+            if st.button("➡️ Siguiente", key="s1"):
+                if w["seleccionadas"]:
+                    w["paso"] = 2
                 else:
-                    st.warning("Debes seleccionar al menos una materia prima.")
+                    st.warning("Selecciona al menos una materia prima.")
         with col2:
-            if st.button("🔄 Reiniciar"):
-                st.session_state.paso_formula = 1
-                st.session_state.datos_formula = {}
+            if st.button("🔄 Reiniciar", key="r1"):
+                st.session_state.pop("wizard")
+                st.rerun()
 
-    # Paso 2 – Ordenar materias primas
-    elif paso == 2:
+    # Paso 2 – Ordenar
+    elif w["paso"] == 2:
         st.subheader("2️⃣ Ordenar materias primas")
-
-        seleccionadas = datos.get("seleccionadas", [])
-        if not seleccionadas:
-            st.warning("⚠️ No hay materias primas seleccionadas.")
-            return
-
-        df_orden = pd.DataFrame({"Materia Prima": seleccionadas})
-
+        df_orden = pd.DataFrame({"Materia Prima": w["ordenadas"]})
         gb = GridOptionsBuilder.from_dataframe(df_orden)
         gb.configure_column("Materia Prima", editable=False, rowDrag=True)
         gb.configure_grid_options(rowDragManaged=True)
-        grid_options = gb.build()
-
-        grid_response = AgGrid(
-            df_orden,
-            gridOptions=grid_options,
-            update_mode=GridUpdateMode.MODEL_CHANGED,
-            height=300,
-            fit_columns_on_grid_load=True,
-            allow_unsafe_jscode=True,
-            theme="streamlit"
-        )
-
+        grid = AgGrid(df_orden, gridOptions=gb.build(),
+                      update_mode=GridUpdateMode.MODEL_CHANGED,
+                      allow_unsafe_jscode=True, theme="streamlit")
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("⬅️ Anterior"):
-                st.session_state.paso_formula = 1
+            if st.button("⬅️ Anterior", key="b2a"):
+                w["paso"] = 1
         with col2:
-            if st.button("➡️ Siguiente"):
-                orden_final = grid_response["data"]["Materia Prima"].dropna().tolist()
-                if orden_final:
-                    datos["ordenadas"] = orden_final
-                    st.session_state.paso_formula = 3
+            if st.button("➡️ Siguiente", key="b2s"):
+                ordenadas = grid["data"]["Materia Prima"].dropna().tolist()
+                if ordenadas:
+                    w["ordenadas"] = ordenadas
+                    w["paso"] = 3
                 else:
-                    st.warning("Debes mantener al menos una materia prima ordenada.")
+                    st.warning("El orden no puede estar vacío.")
 
-    # Paso 3 – Asignar porcentajes (sin reordenar)
-    elif paso == 3:
+    # Paso 3 – Editar %
+    elif w["paso"] == 3:
         st.subheader("3️⃣ Asignar porcentajes")
-        ordenadas = datos.get("ordenadas", [])
-        if not ordenadas:
-            st.warning("⚠️ No hay orden definido.")
-            return
-
-        df_editado, total_pct = mostrar_editor_formula(df_all, ordenadas)
-        datos["df_editado"] = df_editado
-        datos["total_pct"] = total_pct
-
+        df_editado, total_pct = mostrar_editor_formula(df_all.copy(), w["ordenadas"])
+        w["df_editado"] = df_editado
+        w["total_pct"] = total_pct
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("⬅️ Anterior"):
-                st.session_state.paso_formula = 2
+            if st.button("⬅️ Anterior", key="b3a"):
+                w["paso"] = 2
         with col2:
-            if st.button("➡️ Siguiente"):
+            if st.button("➡️ Siguiente", key="b3s"):
                 if total_pct > 0:
-                    st.session_state.paso_formula = 4
+                    w["paso"] = 4
                 else:
-                    st.warning("Asigna porcentajes antes de continuar.")
+                    st.warning("Debe asignar porcentajes mayores a 0.")
 
-    # Paso 4 – Revisión de resultados
-    elif paso == 4:
+    # Paso 4 – Revisión
+    elif w["paso"] == 4:
         st.subheader("4️⃣ Revisión de resultados")
-
-        df_editado = datos.get("df_editado")
-        if df_editado is None or df_editado.empty:
-            st.warning("⚠️ No hay datos para revisar.")
-            return
-
         familias = obtener_familias_parametros()
         columnas = [col for fam in familias.values() for col in fam]
         columnas_validas = [
             col for col in columnas
-            if col in df_editado.columns and (df_editado[col] * df_editado["%"] / 100).sum() > 0
+            if col in w["df_editado"].columns and (w["df_editado"][col] * w["df_editado"]["%"] / 100).sum() > 0
         ]
-
-        precio, composicion = calcular_resultado_formula(df_editado, columnas_validas)
-        datos["precio_total"] = precio
-        datos["columnas_finales"] = columnas_validas
+        precio, compo = calcular_resultado_formula(w["df_editado"], columnas_validas)
+        w["precio_total"] = precio
+        w["columnas_finales"] = columnas_validas
 
         st.success(f"💰 Precio estimado: {precio:.2f} €/kg")
-        if not composicion.empty:
-            comp_df = composicion.reset_index()
+        if not compo.empty:
+            comp_df = compo.reset_index()
             comp_df.columns = ["Parámetro", "% p/p"]
             st.markdown(comp_df.to_html(index=False), unsafe_allow_html=True)
         else:
-            st.info("No hay parámetros técnicos significativos.")
-
+            st.info("No hay parámetros técnicos relevantes.")
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("⬅️ Anterior"):
-                st.session_state.paso_formula = 3
+            if st.button("⬅️ Anterior", key="b4a"):
+                w["paso"] = 3
         with col2:
-            if st.button("➡️ Siguiente"):
-                st.session_state.paso_formula = 5
+            if st.button("➡️ Siguiente", key="b4s"):
+                w["paso"] = 5
 
-    # Paso 5 – Guardar fórmula
-    elif paso == 5:
+    # Paso 5 – Guardar
+    elif w["paso"] == 5:
         st.subheader("5️⃣ Guardar fórmula")
-
-        df_final = datos.get("df_editado")
-        precio = datos.get("precio_total", 0)
-
-        nombre = st.text_input("Nombre de la fórmula")
-
-        if st.button("💾 Guardar fórmula"):
+        nombre = st.text_input("Nombre de la fórmula", key="nombre_formula_wizard")
+        if st.button("💾 Guardar fórmula", key="guardar_final"):
             if not nombre.strip():
-                st.warning("Debes ingresar un nombre.")
+                st.warning("Debes introducir un nombre.")
             else:
+                df_final = w["df_editado"].copy()
                 columnas_base = ["Materia Prima", "%", "Precio €/kg"]
                 columnas_tecnicas = [col for col in df_final.columns if col not in columnas_base and col != "id"]
                 columnas_ordenadas = columnas_base + columnas_tecnicas
                 df_final = df_final[columnas_ordenadas]
-
-                guardar_formula(df_final, nombre.strip(), precio)
+                guardar_formula(df_final, nombre.strip(), w["precio_total"])
                 st.success("✅ Fórmula guardada correctamente.")
-
-        if st.button("⬅️ Anterior"):
-            st.session_state.paso_formula = 4
-
-        if st.button("🔄 Reiniciar todo"):
-            st.session_state.paso_formula = 1
-            st.session_state.datos_formula = {}
-
+        if st.button("⬅️ Anterior", key="b5a"):
+            w["paso"] = 4
+        if st.button("🔄 Reiniciar todo", key="r5"):
+            st.session_state.pop("wizard")
+            st.rerun()
