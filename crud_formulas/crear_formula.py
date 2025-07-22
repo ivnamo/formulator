@@ -71,16 +71,23 @@ def flujo_crear_formula():
 
         host_url = st_javascript("window.location.origin") 
 
-        nombre_formula = st.text_input("Nombre de la fórmula", placeholder="Ej. Bioestimulante Algas v1", key="nombre_crear")
+        nombre_formula = st.text_input(
+            "Nombre de la fórmula",
+            placeholder="Ej. Bioestimulante Algas v1",
+            key="nombre_crear"
+        )
+
         if st.button("Guardar fórmula"):
             if not nombre_formula.strip():
                 st.warning("Debes ingresar un nombre para guardar la fórmula.")
             else:
-                # 🔁 Reconstruir df con columnas completas
-                df_final = df[df["Materia Prima"].isin(df_editado["Materia Prima"])].copy()
-                df_final["%"] = df_editado["%"].values
+                # ✅ Reconstrucción correcta preservando orden
+                df_final = df_editado[["Materia Prima", "%"]].merge(
+                    df.drop(columns=["%"]),
+                    on="Materia Prima",
+                    how="left"
+                )
 
-                # ✅ Reordenar columnas
                 columnas_base = ["Materia Prima", "%", "Precio €/kg"]
                 columnas_tecnicas = [
                     col for col in df_final.columns
@@ -93,4 +100,3 @@ def flujo_crear_formula():
                 formula_id = guardar_formula(df_final, nombre_formula.strip(), precio)
 
                 st.success("✅ Fórmula guardada correctamente.")
-
