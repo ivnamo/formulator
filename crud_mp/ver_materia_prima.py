@@ -22,7 +22,11 @@ def ver_materia_prima():
         st.info("No hay resultados con los filtros aplicados.")
         return
 
+    # ✅ Orden alfabético por nombre
+    df_filtrado = df_filtrado.sort_values("Materia Prima", ascending=True)
+
     st.markdown(f"### 📋 Resultados: {len(df_filtrado)} materia(s) prima(s)")
     st.dataframe(df_filtrado, use_container_width=True, hide_index=True)
+
 
 
