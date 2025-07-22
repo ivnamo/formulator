@@ -111,7 +111,7 @@ def main():
     # --- Formulas ---
 
     if menu == "Formulas":
-        subtarea = st.selectbox("Acción sobre fórmulas", ["Crear", "Wizard", "Ver", "Actualizar", "Eliminar", "Optimizar"])
+        subtarea = st.selectbox("Acción sobre fórmulas", ["Crear", "Ver", "Actualizar", "Eliminar", "Optimizar"])
 
 
 
