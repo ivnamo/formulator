@@ -8,29 +8,31 @@
 import streamlit as st
 import pandas as pd
 from utils.supabase_client import supabase
-from utils.families import obtener_familias_parametros
-from utils.formula_resultados import calcular_resultado_formula
 from utils.editor import mostrar_editor_formula
+from utils.formula_resultados import calcular_resultado_formula
+from utils.families import obtener_familias_parametros
 from utils.guardar_formula import guardar_formula
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
-
 def wizard_crear_formula():
-    st.title("🧪 Crear nueva fórmula paso a paso")
+    st.title("🧪 Crear fórmula (flujo controlado)")
 
-    # Inicialización de estado
-    if "wizard" not in st.session_state:
-        st.session_state.wizard = {
+    # Estado inicial
+    if "wizard_v2" not in st.session_state:
+        st.session_state.wizard_v2 = {
             "paso": 1,
             "seleccionadas": [],
             "ordenadas": [],
-            "df_editado": pd.DataFrame(),
+            "df_editado": None,
             "total_pct": 0.0,
             "precio_total": 0.0,
             "columnas_finales": []
         }
 
-    w = st.session_state.wizard
+    w = st.session_state.wizard_v2
+
+    # Paso actual
+    paso = w["paso"]
 
     # Cargar materias primas
     response = supabase.table("materias_primas").select("*").execute()
@@ -42,34 +44,30 @@ def wizard_crear_formula():
         st.error("No hay materias primas disponibles.")
         return
 
-    st.markdown(f"### Paso {w['paso']} de 5")
+    st.markdown(f"### Paso {paso} de 5")
 
-    # Paso 1 – Selección
-    if w["paso"] == 1:
-        st.subheader("1️⃣ Selección de materias primas")
-        nuevas = st.multiselect(
+    # Paso 1: Selección
+    if paso == 1:
+        st.subheader("1️⃣ Selecciona las materias primas")
+        seleccionadas = st.multiselect(
             "Selecciona materias primas",
-            options=df_all["Materia Prima"].tolist(),
+            df_all["Materia Prima"].tolist(),
             default=w["seleccionadas"]
         )
-        if nuevas != w["seleccionadas"]:
-            w["seleccionadas"] = nuevas
-            w["ordenadas"] = nuevas  # sincroniza orden inicial
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("➡️ Siguiente", key="s1"):
-                if w["seleccionadas"]:
-                    w["paso"] = 2
-                else:
-                    st.warning("Selecciona al menos una materia prima.")
-        with col2:
-            if st.button("🔄 Reiniciar", key="r1"):
-                st.session_state.pop("wizard")
-                st.rerun()
+        w["seleccionadas"] = seleccionadas
+        if seleccionadas:
+            w["ordenadas"] = seleccionadas.copy()
 
-    # Paso 2 – Ordenar
-    elif w["paso"] == 2:
-        st.subheader("2️⃣ Ordenar materias primas")
+        col1, col2 = st.columns(2)
+        with col2:
+            if st.button("➡️ Siguiente"):
+                if w["ordenadas"]:
+                    w["paso"] = 2
+                    st.rerun()
+
+    # Paso 2: Orden
+    elif paso == 2:
+        st.subheader("2️⃣ Ordena las materias primas")
         df_orden = pd.DataFrame({"Materia Prima": w["ordenadas"]})
         gb = GridOptionsBuilder.from_dataframe(df_orden)
         gb.configure_column("Materia Prima", editable=False, rowDrag=True)
@@ -77,38 +75,43 @@ def wizard_crear_formula():
         grid = AgGrid(df_orden, gridOptions=gb.build(),
                       update_mode=GridUpdateMode.MODEL_CHANGED,
                       allow_unsafe_jscode=True, theme="streamlit")
+        nueva_orden = grid["data"]["Materia Prima"].tolist()
+        w["ordenadas"] = nueva_orden
+
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("⬅️ Anterior", key="b2a"):
+            if st.button("⬅️ Anterior"):
                 w["paso"] = 1
+                st.rerun()
         with col2:
-            if st.button("➡️ Siguiente", key="b2s"):
-                ordenadas = grid["data"]["Materia Prima"].dropna().tolist()
-                if ordenadas:
-                    w["ordenadas"] = ordenadas
-                    w["paso"] = 3
-                else:
-                    st.warning("El orden no puede estar vacío.")
+            if st.button("➡️ Siguiente"):
+                w["paso"] = 3
+                st.rerun()
 
-    # Paso 3 – Editar %
-    elif w["paso"] == 3:
-        st.subheader("3️⃣ Asignar porcentajes")
+    # Paso 3: Asignar %
+    elif paso == 3:
+        st.subheader("3️⃣ Asigna los porcentajes")
         df_editado, total_pct = mostrar_editor_formula(df_all.copy(), w["ordenadas"])
         w["df_editado"] = df_editado
         w["total_pct"] = total_pct
+
+        st.write(f"Total: {total_pct:.2f}%")
+
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("⬅️ Anterior", key="b3a"):
+            if st.button("⬅️ Anterior"):
                 w["paso"] = 2
+                st.rerun()
         with col2:
-            if st.button("➡️ Siguiente", key="b3s"):
+            if st.button("➡️ Siguiente"):
                 if total_pct > 0:
                     w["paso"] = 4
+                    st.rerun()
                 else:
-                    st.warning("Debe asignar porcentajes mayores a 0.")
+                    st.warning("Debes asignar al menos un porcentaje positivo.")
 
-    # Paso 4 – Revisión
-    elif w["paso"] == 4:
+    # Paso 4: Revisión
+    elif paso == 4:
         st.subheader("4️⃣ Revisión de resultados")
         familias = obtener_familias_parametros()
         columnas = [col for fam in familias.values() for col in fam]
@@ -116,30 +119,33 @@ def wizard_crear_formula():
             col for col in columnas
             if col in w["df_editado"].columns and (w["df_editado"][col] * w["df_editado"]["%"] / 100).sum() > 0
         ]
-        precio, compo = calcular_resultado_formula(w["df_editado"], columnas_validas)
+        precio, composicion = calcular_resultado_formula(w["df_editado"], columnas_validas)
         w["precio_total"] = precio
         w["columnas_finales"] = columnas_validas
 
         st.success(f"💰 Precio estimado: {precio:.2f} €/kg")
-        if not compo.empty:
-            comp_df = compo.reset_index()
+        if not composicion.empty:
+            comp_df = composicion.reset_index()
             comp_df.columns = ["Parámetro", "% p/p"]
-            st.markdown(comp_df.to_html(index=False), unsafe_allow_html=True)
+            st.dataframe(comp_df, use_container_width=True)
         else:
             st.info("No hay parámetros técnicos relevantes.")
+
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("⬅️ Anterior", key="b4a"):
+            if st.button("⬅️ Anterior"):
                 w["paso"] = 3
+                st.rerun()
         with col2:
-            if st.button("➡️ Siguiente", key="b4s"):
+            if st.button("➡️ Siguiente"):
                 w["paso"] = 5
+                st.rerun()
 
-    # Paso 5 – Guardar
-    elif w["paso"] == 5:
+    # Paso 5: Guardar
+    elif paso == 5:
         st.subheader("5️⃣ Guardar fórmula")
-        nombre = st.text_input("Nombre de la fórmula", key="nombre_formula_wizard")
-        if st.button("💾 Guardar fórmula", key="guardar_final"):
+        nombre = st.text_input("Nombre de la fórmula")
+        if st.button("💾 Guardar"):
             if not nombre.strip():
                 st.warning("Debes introducir un nombre.")
             else:
@@ -150,8 +156,10 @@ def wizard_crear_formula():
                 df_final = df_final[columnas_ordenadas]
                 guardar_formula(df_final, nombre.strip(), w["precio_total"])
                 st.success("✅ Fórmula guardada correctamente.")
-        if st.button("⬅️ Anterior", key="b5a"):
+
+        if st.button("⬅️ Anterior"):
             w["paso"] = 4
-        if st.button("🔄 Reiniciar todo", key="r5"):
-            st.session_state.pop("wizard")
+            st.rerun()
+        if st.button("🔄 Reiniciar"):
+            st.session_state.pop("wizard_v2")
             st.rerun()
