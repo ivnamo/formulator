@@ -58,7 +58,7 @@ def wizard_crear_formula():
             return
 
         seleccionadas = datos["seleccionadas"]
-        ordenadas = st.experimental_data_editor(pd.DataFrame({"Materia Prima": seleccionadas}), num_rows="dynamic")
+        ordenadas = st.data_editor(pd.DataFrame({"Materia Prima": seleccionadas}), num_rows="dynamic")
         orden_final = ordenadas["Materia Prima"].dropna().tolist()
         datos["ordenadas"] = orden_final
 
