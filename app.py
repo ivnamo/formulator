@@ -20,7 +20,6 @@ from crud_formulas.list_formulas import listar_formulas
 from crud_formulas.update_formula import actualizar_formula
 from crud_formulas.delete_formula import eliminar_formula
 from crud_formulas.optimizar_formula import flujo_optimizar_formula
-from crud_formulas.wizard_crear_formula import wizard_crear_formula
 from utils.cargar_formula import cargar_formula_por_id
 
 # 🆕 Módulo calidad
@@ -129,8 +128,6 @@ def main():
                 cargar_formula_por_id(formula_id)
         elif subtarea == "Optimizar":
             flujo_optimizar_formula()
-        elif subtarea == "Wizard":
-            wizard_crear_formula()
         return
 
     # --- Calidad ---
