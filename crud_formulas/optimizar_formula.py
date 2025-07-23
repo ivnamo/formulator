@@ -46,13 +46,29 @@ def flujo_optimizar_formula():
         val_min, val_max = st.slider(f"Rango para {col} (%)", min_value=min_val, max_value=max_val, value=(min_val, max_val), step=0.01)
         restricciones[col] = {"min": val_min, "max": val_max}
 
+    # 🧭 Dirección de optimización
+    modo = st.radio("Tipo de optimización", ["Minimizar", "Maximizar"], horizontal=True)
+
+    # 🎯 Selección de variable objetivo
+    opciones_objetivo = ["Precio €/kg"] + columnas_param_opt + seleccionadas
+    variable_objetivo = st.selectbox("Selecciona la variable objetivo", opciones_objetivo)
+
     if st.button("🔧 Ejecutar optimización"):
         try:
             restricciones_min = {k: v["min"] for k, v in restricciones.items()}
             restricciones_max = {k: v["max"] for k, v in restricciones.items()}
-            df_opt, costo = optimizar_simplex(df_seleccion, columnas_tecnicas, restricciones_min, restricciones_max)
 
-            st.success(f"✅ Fórmula optimizada. Costo total: {costo:.2f} €/kg")
+            df_opt, valor_objetivo = optimizar_simplex(
+                df_seleccion,
+                columnas_objetivo=columnas_tecnicas,
+                restricciones_min=restricciones_min,
+                restricciones_max=restricciones_max,
+                variable_objetivo=variable_objetivo,
+                modo=modo
+            )
+
+            unidad = "€/kg" if variable_objetivo == "Precio €/kg" else "% p/p"
+            st.success(f"✅ Fórmula optimizada. {modo} de '{variable_objetivo}': {valor_objetivo:.3f} {unidad}")
             st.dataframe(df_opt[["Materia Prima", "%", "Precio €/kg"] + columnas_tecnicas])
 
             st.markdown("### 📊 Composición de la fórmula optimizada")
