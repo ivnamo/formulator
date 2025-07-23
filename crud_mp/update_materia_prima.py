@@ -11,14 +11,14 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from utils.supabase_client import supabase
-from utils.data_loader import cargar_datos
+
 
 def actualizar_materia_prima():
     st.subheader("✏️ Actualizar materias primas")
 
-    #response = supabase.table("materias_primas").select("*").execute()
-    #df = pd.DataFrame(response.data)
-    df = cargar_datos()
+    response = supabase.table("materias_primas").select("*").execute()
+    df = pd.DataFrame(response.data)
+
 
     if df.empty:
         st.info("No hay materias primas disponibles.")
@@ -33,9 +33,10 @@ def actualizar_materia_prima():
         floatingFilter=True,
         width=120,       # ✅ fuerza ancho base
         minWidth=100,
-        maxWidth=130
+        resizable=True
     )
     gb.configure_column("id", editable=False)
+    gb.configure_sort("Materia Prima", sort="asc")
     grid_options = gb.build()
 
     # CSS para asegurar scroll y estilo
