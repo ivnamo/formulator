@@ -2,21 +2,22 @@ import streamlit as st
 import pandas as pd
 from utils.supabase_client import supabase
 from utils.filtros_materias_primas import aplicar_filtros_materias_primas
+from utils.data_loader import cargar_datos
+
 
 
 def ver_materia_prima():
     st.subheader("🔎 Buscar materias primas")
 
     # Cargar desde Supabase
-    response = supabase.table("materias_primas").select("*").execute()
-    df = pd.DataFrame(response.data)
+
+    df = cargar_datos()
+
 
     if df.empty:
         st.warning("No hay materias primas registradas.")
         return
 
-    # ✅ Ordenar alfabéticamente antes de filtrar
-    df = df.sort_values("Materia Prima", ascending=True)
 
     # Aplicar filtros definidos por el usuario
     df_filtrado = aplicar_filtros_materias_primas(df)
