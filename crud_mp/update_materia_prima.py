@@ -11,6 +11,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from utils.supabase_client import supabase
+from utils.data_loader import cargar_datos
 
 def actualizar_materia_prima():
     st.subheader("✏️ Actualizar materias primas")
