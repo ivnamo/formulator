@@ -18,6 +18,8 @@ def actualizar_materia_prima():
 
     response = supabase.table("materias_primas").select("*").execute()
     df = pd.DataFrame(response.data)
+    df = df.sort_values("Materia Prima", ascending=True)
+
 
 
     if df.empty:
