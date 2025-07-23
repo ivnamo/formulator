@@ -5,7 +5,7 @@ from openpyxl.drawing.image import Image as XLImage
 from io import BytesIO
 import requests
 
-def exportar_hoja_trabajo_excel(df: pd.DataFrame, nombre_formula: str, codigo: str = "", fecha: str = "", logo_path: str = "logonegro.png") -> BytesIO:
+def exportar_hoja_trabajo_excel(df: pd.DataFrame, nombre_formula: str, codigo: str = "", fecha: str = "") -> BytesIO:
     wb = Workbook()
     ws = wb.active
 
