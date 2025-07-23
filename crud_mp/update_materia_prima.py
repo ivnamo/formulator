@@ -38,7 +38,6 @@ def actualizar_materia_prima():
         resizable=True
     )
     gb.configure_column("id", editable=False)
-    gb.configure_sort("Materia Prima", sort="asc")
     grid_options = gb.build()
 
     # CSS para asegurar scroll y estilo
