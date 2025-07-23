@@ -15,8 +15,9 @@ from utils.supabase_client import supabase
 def actualizar_materia_prima():
     st.subheader("✏️ Actualizar materias primas")
 
-    response = supabase.table("materias_primas").select("*").execute()
-    df = pd.DataFrame(response.data)
+    #response = supabase.table("materias_primas").select("*").execute()
+    #df = pd.DataFrame(response.data)
+    df = cargar_datos()
 
     if df.empty:
         st.info("No hay materias primas disponibles.")
