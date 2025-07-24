@@ -125,8 +125,16 @@ def flujo_optimizar_formula():
                     columnas_mayor_0 = composicion[composicion["Cantidad %"] > 0].index.tolist()
                     mostrar_resultados(r["df"], columnas_mayor_0)
 
-        # 📈 Comparación visual de composiciones
+       # 📈 Comparación visual de composiciones
         st.markdown("## 📊 Comparación visual de parámetros técnicos")
+        
+        # 👉 Construir df_comp antes del gráfico
+        comp_all = {}
+        for r_ in resultados:
+            if r_["exito"]:
+                _, comp = calcular_resultado_formula(r_["df"], columnas_tecnicas)
+                comp_all[r_["motor"]] = comp["Cantidad %"]
+        df_comp = pd.DataFrame(comp_all).fillna(0)
         
         # 🔘 Selector de tipo de gráfico
         tipo_grafico = st.selectbox("Tipo de visualización", ["Barras agrupadas", "Mapa de calor"])
@@ -146,7 +154,7 @@ def flujo_optimizar_formula():
                     labels=dict(x="Motor", y="Parámetro técnico", color="% p/p"),
                     x=df_filtrado.columns,
                     y=df_filtrado.index,
-                    color_continuous_scale="YlGnBu",
+                    color_continuous_scale="Viridis",  # más claro que YlGnBu
                     text_auto=".1f"
                 )
                 fig.update_layout(
@@ -156,5 +164,6 @@ def flujo_optimizar_formula():
                     height=600
                 )
                 st.plotly_chart(fig, use_container_width=True)
+
 
         
