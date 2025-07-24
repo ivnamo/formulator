@@ -50,7 +50,24 @@ def flujo_optimizar_formula():
     opciones_objetivo = ["Precio €/kg"] + columnas_param_opt + seleccionadas
     variable_objetivo = st.selectbox("Selecciona la variable objetivo", opciones_objetivo)
 
-    motores = st.multiselect("Selecciona motores de optimización", ["Simplex", "SLSQP"], default=["Simplex"])
+    motores = st.multiselect("Selecciona motores de optimización", ["Simplex", "SLSQP", "COBYLA", "Genético"], default=["Simplex"])
+    parametros_extra = {}
+
+    if "Genético" in motores:
+        with st.expander("⚙️ Parámetros del algoritmo genético", expanded=False):
+            n_ind = st.slider("Número de individuos", 10, 200, value=50, step=10)
+            n_gen = st.slider("Número de generaciones", 10, 300, value=100, step=10)
+            cxpb = st.slider("Probabilidad de cruce (cxpb)", 0.0, 1.0, value=0.7, step=0.05)
+            mutpb = st.slider("Probabilidad de mutación (mutpb)", 0.0, 1.0, value=0.2, step=0.05)
+    
+            parametros_extra["Genético"] = {
+                "n_individuos": n_ind,
+                "n_generaciones": n_gen,
+                "cxpb": cxpb,
+                "mutpb": mutpb
+            }
+
+
 
     if st.button("🔧 Ejecutar optimización"):
         restricciones_min = {k: v["min"] for k, v in restricciones.items()}
@@ -65,7 +82,8 @@ def flujo_optimizar_formula():
                 restricciones_min=restricciones_min,
                 restricciones_max=restricciones_max,
                 variable_objetivo=variable_objetivo,
-                modo=modo
+                modo=modo,
+                parametros_extra=parametros_extra
             )
             st.session_state.resultados_optimizacion.append(resultado)
 
