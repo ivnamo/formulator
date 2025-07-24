@@ -127,36 +127,34 @@ def flujo_optimizar_formula():
 
         # 📈 Comparación visual de composiciones
         st.markdown("## 📊 Comparación visual de parámetros técnicos")
-        comp_all = {}
-        for r_ in resultados:
-            if r_["exito"]:
-                _, comp = calcular_resultado_formula(r_["df"], columnas_tecnicas)
-                comp_all[r_["motor"]] = comp["Cantidad %"]
-        df_comp = pd.DataFrame(comp_all).fillna(0)
-        if not df_comp.empty:
-            st.bar_chart(df_comp)
-
-
-
-        # Filtrar parámetros significativos (opcional)
-        df_filtrado = df_comp[df_comp.max(axis=1) > 0.5]  # Puedes ajustar el umbral
         
-        if not df_filtrado.empty:
-            fig = px.imshow(
-                df_filtrado,
-                labels=dict(x="Motor", y="Parámetro técnico", color="% p/p"),
-                x=df_filtrado.columns,
-                y=df_filtrado.index,
-                color_continuous_scale="Viridis",
-                text_auto=".1f"
-            )
-            fig.update_layout(
-                title="Mapa de calor de parámetros técnicos por motor",
-                xaxis_title="Motor",
-                yaxis_title="Parámetro técnico",
-                height=600
-            )
-            st.plotly_chart(fig, use_container_width=True)
+        # 🔘 Selector de tipo de gráfico
+        tipo_grafico = st.selectbox("Tipo de visualización", ["Barras agrupadas", "Mapa de calor"])
+        
+        # Filtrar parámetros significativos
+        df_filtrado = df_comp[df_comp.max(axis=1) > 0.5]
+        
+        if df_filtrado.empty:
+            st.info("No hay parámetros con valores suficientes para mostrar.")
         else:
-            st.info("No hay parámetros con valores suficientes para mostrar en el heatmap.")
+            if tipo_grafico == "Barras agrupadas":
+                st.bar_chart(df_filtrado.T)
+        
+            elif tipo_grafico == "Mapa de calor":
+                fig = px.imshow(
+                    df_filtrado,
+                    labels=dict(x="Motor", y="Parámetro técnico", color="% p/p"),
+                    x=df_filtrado.columns,
+                    y=df_filtrado.index,
+                    color_continuous_scale="YlGnBu",
+                    text_auto=".1f"
+                )
+                fig.update_layout(
+                    title="Mapa de calor de parámetros técnicos por motor",
+                    xaxis_title="Motor",
+                    yaxis_title="Parámetro técnico",
+                    height=600
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
         
