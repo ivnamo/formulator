@@ -12,14 +12,12 @@ from utils.families import obtener_familias_parametros
 from utils.optimizador_simplex import optimizar_simplex
 from utils.formula_resultados import calcular_resultado_formula
 from utils.resultados import mostrar_resultados
-from utils.data_loader import cargar_datos
 
 def flujo_optimizar_formula():
     st.title("🧮 Optimización de Fórmulas")
 
-    #response = supabase.table("materias_primas").select("*").execute()
-    #df = pd.DataFrame(response.data)
-    df = cargar_datos()
+    response = supabase.table("materias_primas").select("*").execute()
+    df = pd.DataFrame(response.data)
     df["%"] = 0.0
 
     if df.empty or "Materia Prima" not in df.columns:
@@ -80,6 +78,9 @@ def flujo_optimizar_formula():
                 if (df_opt[col] * df_opt["%"] / 100).sum() > 0
             ]
             mostrar_resultados(df_opt, columnas_mayor_0)
+
+        except Exception as e:
+            st.error(f"❌ Error en la optimización: {e}")
 
         except Exception as e:
             st.error(f"❌ Error en la optimización: {e}")
