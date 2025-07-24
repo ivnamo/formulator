@@ -90,7 +90,9 @@ def optimizar_genetico(
 
 
 
-def optimizar_cobyla(df, columnas_objetivo, restricciones_min, restricciones_max, variable_objetivo, modo):
+from scipy.optimize import minimize
+
+def optimizar_cobyla(df, columnas_objetivo, restricciones_min, restricciones_max, variable_objetivo, modo, parametros: dict = None):
     n = len(df)
 
     if variable_objetivo == "Precio €/kg":
@@ -108,31 +110,39 @@ def optimizar_cobyla(df, columnas_objetivo, restricciones_min, restricciones_max
     def fun_obj(x):
         return np.dot(coef_obj, x)
 
-    constraints = []
+    constraints = [
+        {"type": "ineq", "fun": lambda x: 100.1 - np.sum(x)},
+        {"type": "ineq", "fun": lambda x: np.sum(x) - 99.9}
+    ]
 
-    # Aproximar suma 100% como doble desigualdad
-    constraints.append({"type": "ineq", "fun": lambda x: 100.1 - np.sum(x)})
-    constraints.append({"type": "ineq", "fun": lambda x: np.sum(x) - 99.9})
+    for param, val in (restricciones_min or {}).items():
+        if param in df.columns:
+            c = df[param].fillna(0).values / 100
+            constraints.append({"type": "ineq", "fun": lambda x, c=c, v=val: np.dot(c, x) - v})
 
-    if restricciones_min:
-        for param, val in restricciones_min.items():
-            if param in df.columns:
-                coef = df[param].fillna(0).values / 100
-                constraints.append({"type": "ineq", "fun": lambda x, c=coef, v=val: np.dot(c, x) - v})
-
-    if restricciones_max:
-        for param, val in restricciones_max.items():
-            if param in df.columns:
-                coef = df[param].fillna(0).values / 100
-                constraints.append({"type": "ineq", "fun": lambda x, c=coef, v=val: v - np.dot(c, x)})
+    for param, val in (restricciones_max or {}).items():
+        if param in df.columns:
+            c = df[param].fillna(0).values / 100
+            constraints.append({"type": "ineq", "fun": lambda x, c=c, v=val: v - np.dot(c, x)})
 
     x0 = np.full(n, 100 / n)
-    bounds = [(0, 100)] * n
 
-    res = minimize(fun_obj, x0, method="COBYLA", constraints=constraints)
+    # Leer parámetro maxfun desde parámetros extra
+    maxfun = parametros.get("maxfun", 1000) if parametros else 1000
+
+    res = minimize(
+        fun_obj,
+        x0,
+        method="COBYLA",
+        constraints=constraints,
+        options={"maxfun": maxfun}
+    )
 
     if not res.success:
-        raise ValueError("COBYLA: " + res.message)
+        msg = res.message
+        if "MAXFUN" in msg.upper():
+            msg += " (Se alcanzó el número máximo de evaluaciones. Puedes aumentarlo desde la interfaz)"
+        raise ValueError("COBYLA: " + msg)
 
     df_resultado = df.copy()
     df_resultado["%"] = res.x.round(4)
@@ -141,6 +151,7 @@ def optimizar_cobyla(df, columnas_objetivo, restricciones_min, restricciones_max
         valor *= -1
 
     return df_resultado, valor
+
 
 def optimizar_simplex(
     df: pd.DataFrame,
