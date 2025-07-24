@@ -1,3 +1,5 @@
+
+import pandas as pd
 from utils.optimizadores import optimizar_simplex, optimizar_slsqp
 
 def ejecutar_motor(
