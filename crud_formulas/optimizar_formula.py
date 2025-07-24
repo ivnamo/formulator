@@ -94,21 +94,15 @@ def flujo_optimizar_formula():
         # 📊 Tabla comparativa
         tabla = []
         for r in resultados:
-            if r["exito"]:
-                unidad = "€/kg" if variable_objetivo == "Precio €/kg" else "% p/p"
-                tabla.append({
-                    "Motor": r["motor"],
-                    "Resultado": round(r["valor_objetivo"], 3),
-                    "Unidad": unidad,
-                    "Estado": "✅ Éxito"
-                })
-            else:
-                tabla.append({
-                    "Motor": r["motor"],
-                    "Resultado": "-",
-                    "Unidad": "",
-                    "Estado": f"❌ {r['mensaje']}"
-                })
+            unidad = "€/kg" if variable_objetivo == "Precio €/kg" else "% p/p"
+            tabla.append({
+                "Motor": r["motor"],
+                "Resultado": round(r["valor_objetivo"], 3) if r["exito"] else None,
+                "Unidad": unidad if r["exito"] else "",
+                "Estado": "✅ Éxito" if r["exito"] else f"❌ {r['mensaje']}"
+            })
+
+ 
 
         st.markdown("## 📋 Comparativa de motores")
         st.dataframe(pd.DataFrame(tabla))
