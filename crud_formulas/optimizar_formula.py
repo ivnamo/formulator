@@ -12,7 +12,7 @@ from utils.ejecutar_motor import ejecutar_motor
 from utils.formula_resultados import calcular_resultado_formula
 from utils.resultados import mostrar_resultados
 from utils.data_loader import cargar_datos
-
+import plotly.express as px
 
 def flujo_optimizar_formula():
     st.title("🧮 Optimización de Fórmulas")
@@ -137,3 +137,26 @@ def flujo_optimizar_formula():
             st.bar_chart(df_comp)
 
 
+
+        # Filtrar parámetros significativos (opcional)
+        df_filtrado = df_comp[df_comp.max(axis=1) > 0.5]  # Puedes ajustar el umbral
+        
+        if not df_filtrado.empty:
+            fig = px.imshow(
+                df_filtrado,
+                labels=dict(x="Motor", y="Parámetro técnico", color="% p/p"),
+                x=df_filtrado.columns,
+                y=df_filtrado.index,
+                color_continuous_scale="YlGnBu",
+                text_auto=".1f"
+            )
+            fig.update_layout(
+                title="Mapa de calor de parámetros técnicos por motor",
+                xaxis_title="Motor",
+                yaxis_title="Parámetro técnico",
+                height=600
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No hay parámetros con valores suficientes para mostrar en el heatmap.")
+        
