@@ -12,12 +12,14 @@ from utils.families import obtener_familias_parametros
 from utils.optimizador_simplex import optimizar_simplex
 from utils.formula_resultados import calcular_resultado_formula
 from utils.resultados import mostrar_resultados
+from utils.data_loader import cargar_datos
 
 def flujo_optimizar_formula():
     st.title("🧮 Optimización de Fórmulas")
 
-    response = supabase.table("materias_primas").select("*").execute()
-    df = pd.DataFrame(response.data)
+    #response = supabase.table("materias_primas").select("*").execute()
+    #df = pd.DataFrame(response.data)
+    df = cargar_datos()
     df["%"] = 0.0
 
     if df.empty or "Materia Prima" not in df.columns:
