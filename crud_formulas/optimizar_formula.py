@@ -50,7 +50,8 @@ def flujo_optimizar_formula():
     opciones_objetivo = ["Precio €/kg"] + columnas_param_opt + seleccionadas
     variable_objetivo = st.selectbox("Selecciona la variable objetivo", opciones_objetivo)
 
-    motores = st.multiselect("Selecciona motores de optimización", ["Simplex", "SLSQP", "COBYLA", "Genético"], default=["Simplex"])
+    #motores = st.multiselect("Selecciona motores de optimización", ["Simplex", "SLSQP", "COBYLA", "Genético"], default=["Simplex"])
+    motores = st.multiselect("Selecciona motores de optimización", ["Simplex"], default=["Simplex"])
     parametros_extra = {}
     
     if "COBYLA" in motores:
