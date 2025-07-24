@@ -54,9 +54,9 @@ def flujo_optimizar_formula():
     parametros_extra = {}
     
     if "COBYLA" in motores:
-    with st.expander("⚙️ Parámetros COBYLA"):
-        maxfun = st.number_input("Máximo de evaluaciones (maxfun)", min_value=100, max_value=10000, value=1000, step=100)
-        parametros_extra["COBYLA"] = {"maxfun": maxfun}
+        with st.expander("⚙️ Parámetros COBYLA"):
+            maxfun = st.number_input("Máximo de evaluaciones (maxfun)", min_value=100, max_value=10000, value=1000, step=100)
+            parametros_extra["COBYLA"] = {"maxfun": maxfun}
 
 
     if "Genético" in motores:
