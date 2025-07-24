@@ -15,7 +15,119 @@
 import pandas as pd
 import numpy as np
 from scipy.optimize import linprog, minimize
+from deap import base, creator, tools, algorithms
+import random
 
+def optimizar_genetico(df, columnas_objetivo, restricciones_min, restricciones_max, variable_objetivo, modo):
+    n = len(df)
+
+    if variable_objetivo == "Precio €/kg":
+        coef_obj = df["Precio €/kg"].fillna(0).values
+    elif variable_objetivo in columnas_objetivo:
+        coef_obj = df[variable_objetivo].fillna(0).values
+    elif variable_objetivo in df["Materia Prima"].values:
+        coef_obj = (df["Materia Prima"] == variable_objetivo).astype(float).values
+    else:
+        raise ValueError(f"Variable objetivo no reconocida: {variable_objetivo}")
+
+    if modo == "Maximizar":
+        coef_obj = -coef_obj
+
+    def eval_ind(ind):
+        x = np.array(ind)
+        penalty = abs(np.sum(x) - 100) * 1000
+
+        for param, val in (restricciones_min or {}).items():
+            if param in df.columns:
+                c = df[param].fillna(0).values / 100
+                penalty += max(0, val - np.dot(c, x)) * 1000
+
+        for param, val in (restricciones_max or {}).items():
+            if param in df.columns:
+                c = df[param].fillna(0).values / 100
+                penalty += max(0, np.dot(c, x) - val) * 1000
+
+        score = np.dot(coef_obj, x) / 100 + penalty
+        return (score,)
+
+    creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+    creator.create("Individual", list, fitness=creator.FitnessMin)
+
+    toolbox = base.Toolbox()
+    toolbox.register("attr", lambda: random.uniform(0, 100))
+    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr, n)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+    toolbox.register("evaluate", eval_ind)
+    toolbox.register("mate", tools.cxBlend, alpha=0.5)
+    toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=10, indpb=0.2)
+    toolbox.register("select", tools.selTournament, tournsize=3)
+
+    pop = toolbox.population(n=50)
+    algorithms.eaSimple(pop, toolbox, cxpb=0.6, mutpb=0.2, ngen=80, verbose=False)
+
+    best = tools.selBest(pop, 1)[0]
+    df_resultado = df.copy()
+    df_resultado["%"] = np.array(best).round(4)
+
+    valor = np.dot(coef_obj, best) / 100
+    if modo == "Maximizar":
+        valor *= -1
+
+    return df_resultado, valor
+
+
+def optimizar_cobyla(df, columnas_objetivo, restricciones_min, restricciones_max, variable_objetivo, modo):
+    n = len(df)
+
+    if variable_objetivo == "Precio €/kg":
+        coef_obj = df["Precio €/kg"].fillna(0).values
+    elif variable_objetivo in columnas_objetivo:
+        coef_obj = df[variable_objetivo].fillna(0).values
+    elif variable_objetivo in df["Materia Prima"].values:
+        coef_obj = (df["Materia Prima"] == variable_objetivo).astype(float).values
+    else:
+        raise ValueError(f"Variable objetivo no reconocida: {variable_objetivo}")
+
+    if modo == "Maximizar":
+        coef_obj = -coef_obj
+
+    def fun_obj(x):
+        return np.dot(coef_obj, x)
+
+    constraints = []
+
+    # Aproximar suma 100% como doble desigualdad
+    constraints.append({"type": "ineq", "fun": lambda x: 100.1 - np.sum(x)})
+    constraints.append({"type": "ineq", "fun": lambda x: np.sum(x) - 99.9})
+
+    if restricciones_min:
+        for param, val in restricciones_min.items():
+            if param in df.columns:
+                coef = df[param].fillna(0).values / 100
+                constraints.append({"type": "ineq", "fun": lambda x, c=coef, v=val: np.dot(c, x) - v})
+
+    if restricciones_max:
+        for param, val in restricciones_max.items():
+            if param in df.columns:
+                coef = df[param].fillna(0).values / 100
+                constraints.append({"type": "ineq", "fun": lambda x, c=coef, v=val: v - np.dot(c, x)})
+
+    x0 = np.full(n, 100 / n)
+    bounds = [(0, 100)] * n
+
+    res = minimize(fun_obj, x0, method="COBYLA", constraints=constraints)
+
+    if not res.success:
+        raise ValueError("COBYLA: " + res.message)
+
+    df_resultado = df.copy()
+    df_resultado["%"] = res.x.round(4)
+    valor = np.dot(coef_obj, res.x) / 100
+    if modo == "Maximizar":
+        valor *= -1
+
+    return df_resultado, valor
 
 def optimizar_simplex(
     df: pd.DataFrame,
