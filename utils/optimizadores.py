@@ -5,22 +5,24 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
-# ------------------------------------------------------------------------------
-# FORMULATOR – Uso exclusivo de Iván Navarro
-# Todos los derechos reservados © 2025
-# Este archivo forma parte de un software no libre y no está autorizado su uso
-# ni distribución sin consentimiento expreso y por escrito del autor.
-# ------------------------------------------------------------------------------
-
 import pandas as pd
 import numpy as np
 from scipy.optimize import linprog, minimize
 from deap import base, creator, tools, algorithms
 import random
 
-def optimizar_genetico(df, columnas_objetivo, restricciones_min, restricciones_max, variable_objetivo, modo):
+def optimizar_genetico(
+    df,
+    columnas_objetivo,
+    restricciones_min,
+    restricciones_max,
+    variable_objetivo,
+    modo,
+    parametros: dict = None
+):
     n = len(df)
 
+    # Coeficiente de la función objetivo
     if variable_objetivo == "Precio €/kg":
         coef_obj = df["Precio €/kg"].fillna(0).values
     elif variable_objetivo in columnas_objetivo:
@@ -33,6 +35,13 @@ def optimizar_genetico(df, columnas_objetivo, restricciones_min, restricciones_m
     if modo == "Maximizar":
         coef_obj = -coef_obj
 
+    # Leer parámetros con valores por defecto
+    n_ind = parametros.get("n_individuos", 50) if parametros else 50
+    n_gen = parametros.get("n_generaciones", 100) if parametros else 100
+    cxpb = parametros.get("cxpb", 0.7) if parametros else 0.7
+    mutpb = parametros.get("mutpb", 0.2) if parametros else 0.2
+
+    # Evaluación con penalización
     def eval_ind(ind):
         x = np.array(ind)
         penalty = abs(np.sum(x) - 100) * 1000
@@ -50,8 +59,11 @@ def optimizar_genetico(df, columnas_objetivo, restricciones_min, restricciones_m
         score = np.dot(coef_obj, x) / 100 + penalty
         return (score,)
 
-    creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-    creator.create("Individual", list, fitness=creator.FitnessMin)
+    # Evitar error si ya existe el creator
+    if not hasattr(creator, "FitnessMin"):
+        creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+    if not hasattr(creator, "Individual"):
+        creator.create("Individual", list, fitness=creator.FitnessMin)
 
     toolbox = base.Toolbox()
     toolbox.register("attr", lambda: random.uniform(0, 100))
@@ -63,8 +75,8 @@ def optimizar_genetico(df, columnas_objetivo, restricciones_min, restricciones_m
     toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=10, indpb=0.2)
     toolbox.register("select", tools.selTournament, tournsize=3)
 
-    pop = toolbox.population(n=50)
-    algorithms.eaSimple(pop, toolbox, cxpb=0.6, mutpb=0.2, ngen=80, verbose=False)
+    pop = toolbox.population(n=n_ind)
+    algorithms.eaSimple(pop, toolbox, cxpb=cxpb, mutpb=mutpb, ngen=n_gen, verbose=False)
 
     best = tools.selBest(pop, 1)[0]
     df_resultado = df.copy()
@@ -75,6 +87,7 @@ def optimizar_genetico(df, columnas_objetivo, restricciones_min, restricciones_m
         valor *= -1
 
     return df_resultado, valor
+
 
 
 def optimizar_cobyla(df, columnas_objetivo, restricciones_min, restricciones_max, variable_objetivo, modo):
