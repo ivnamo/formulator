@@ -8,6 +8,7 @@ Pillow
 streamlit-javascript
 reportlab
 scipy
+deap
 
 
 
