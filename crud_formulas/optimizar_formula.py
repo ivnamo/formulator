@@ -147,7 +147,7 @@ def flujo_optimizar_formula():
                 labels=dict(x="Motor", y="Parámetro técnico", color="% p/p"),
                 x=df_filtrado.columns,
                 y=df_filtrado.index,
-                color_continuous_scale="YlGnBu",
+                color_continuous_scale="Viridis",
                 text_auto=".1f"
             )
             fig.update_layout(
