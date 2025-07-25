@@ -1,21 +1,13 @@
-# ------------------------------------------------------------------------------
-# FORMULATOR – Uso exclusivo de Iván Navarro
-# Todos los derechos reservados © 2025
-# Este archivo forma parte de un software no libre y no está autorizado su uso
-# ni distribución sin consentimiento expreso y por escrito del autor.
-# ------------------------------------------------------------------------------
-
-import streamlit as st
-import pandas as pd
 from utils.supabase_client import supabase
 from utils.editor import mostrar_editor_formula
 from utils.resultados import mostrar_resultados
 from utils.families import obtener_familias_parametros
 from utils.formula_resultados import calcular_resultado_formula
 from utils.guardar_formula import guardar_formula
-from utils.generar_qr import generar_qr
-from utils.exportar_formula import exportar_formula_excel
-from streamlit_javascript import st_javascript
+from streamlit_javascript import st_javascript  # lo mantenemos por ahora
+
+import streamlit as st
+import pandas as pd
 
 def flujo_crear_formula():
     """Interfaz para crear y guardar nuevas fórmulas."""
@@ -29,7 +21,7 @@ def flujo_crear_formula():
 
     seleccionadas = st.multiselect(
         "Busca y selecciona las materias primas",
-        options=df["Materia Prima"].dropna().tolist(),
+        options=sorted(df["Materia Prima"].dropna().tolist()),
         help="Puedes escribir para buscar por nombre",
         key="mp_crear",
     )
@@ -79,16 +71,23 @@ def flujo_crear_formula():
 
         host_url = st_javascript("window.location.origin") 
 
-        nombre_formula = st.text_input("Nombre de la fórmula", placeholder="Ej. Bioestimulante Algas v1", key="nombre_crear")
+        nombre_formula = st.text_input(
+            "Nombre de la fórmula",
+            placeholder="Ej. Bioestimulante Algas v1",
+            key="nombre_crear"
+        )
+
         if st.button("Guardar fórmula"):
             if not nombre_formula.strip():
                 st.warning("Debes ingresar un nombre para guardar la fórmula.")
             else:
-                # 🔁 Reconstruir df con columnas completas
-                df_final = df[df["Materia Prima"].isin(df_editado["Materia Prima"])].copy()
-                df_final["%"] = df_editado["%"].values
+                # ✅ Reconstrucción correcta preservando orden
+                df_final = df_editado[["Materia Prima", "%"]].merge(
+                    df.drop(columns=["%"]),
+                    on="Materia Prima",
+                    how="left"
+                )
 
-                # ✅ Reordenar columnas
                 columnas_base = ["Materia Prima", "%", "Precio €/kg"]
                 columnas_tecnicas = [
                     col for col in df_final.columns
@@ -99,20 +98,5 @@ def flujo_crear_formula():
 
                 precio, _ = calcular_resultado_formula(df_final, columnas_filtradas)
                 formula_id = guardar_formula(df_final, nombre_formula.strip(), precio)
-                url_formula = f"{host_url}/?formula_id={formula_id}"
-
-                qr_img = generar_qr(url_formula)
 
                 st.success("✅ Fórmula guardada correctamente.")
-                st.image(qr_img, caption="Código QR para esta fórmula", use_container_width=False)
-                st.code(url_formula, language="markdown")
-
-                st.markdown("---")
-                st.subheader("📤 Exportar fórmula a Excel")
-                excel_bytes = exportar_formula_excel(df_final, nombre_formula.strip())
-                st.download_button(
-                    label="⬇️ Descargar Excel",
-                    data=excel_bytes,
-                    file_name=f"{nombre_formula.strip()}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )

@@ -12,11 +12,15 @@ import pandas as pd
 import numpy as np
 from utils.supabase_client import supabase
 
+
 def actualizar_materia_prima():
     st.subheader("✏️ Actualizar materias primas")
 
     response = supabase.table("materias_primas").select("*").execute()
     df = pd.DataFrame(response.data)
+    df = df.sort_values("Materia Prima", ascending=True)
+
+
 
     if df.empty:
         st.info("No hay materias primas disponibles.")
@@ -31,7 +35,7 @@ def actualizar_materia_prima():
         floatingFilter=True,
         width=120,       # ✅ fuerza ancho base
         minWidth=100,
-        maxWidth=130
+        resizable=True
     )
     gb.configure_column("id", editable=False)
     grid_options = gb.build()

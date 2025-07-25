@@ -9,12 +9,16 @@
 import streamlit as st
 import pandas as pd
 from utils.supabase_client import supabase
+from utils.data_loader import cargar_datos
+
 
 def eliminar_materia_prima():
     st.subheader("🗑️ Eliminar materia prima")
 
-    response = supabase.table("materias_primas").select('id, "Materia Prima"').execute()
-    df = pd.DataFrame(response.data)
+    #response = supabase.table("materias_primas").select('id, "Materia Prima"').execute()
+    #df = pd.DataFrame(response.data)
+    df = cargar_datos()
+
 
     if df.empty:
         st.info("No hay materias primas para eliminar.")

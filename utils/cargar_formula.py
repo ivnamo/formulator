@@ -94,8 +94,7 @@ def cargar_formula_por_id(formula_id: str):
             df=materias_primas,
             nombre_formula=nombre,
             codigo=codigo,
-            fecha=fecha_formateada,
-            logo_path="/mnt/data/logo.png"
+            fecha=fecha_formateada
         )
         st.download_button(
             label="🧪 Descargar hoja de trabajo Excel",

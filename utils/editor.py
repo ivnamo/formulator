@@ -11,7 +11,11 @@ import pandas as pd
 from utils.families import obtener_familias_parametros
 
 def mostrar_editor_formula(df, seleccionadas):
-    df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy().reset_index(drop=True)
+    #df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy().reset_index(drop=True)
+    df_filtrado = df[df["Materia Prima"].isin(seleccionadas)].copy()
+    df_filtrado["orden_usuario"] = df_filtrado["Materia Prima"].apply(lambda x: seleccionadas.index(x))
+    df_filtrado = df_filtrado.sort_values("orden_usuario").drop(columns="orden_usuario").reset_index(drop=True)
+
 
     if df_filtrado.empty:
         return pd.DataFrame(), 0.0

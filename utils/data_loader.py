@@ -9,12 +9,11 @@
 import pandas as pd
 from utils.supabase_client import supabase
 
-def cargar_datos(archivo):
-    if archivo is not None:
-        df = pd.read_excel(archivo)
-    else:
-        response = supabase.table("materias_primas").select("*").execute()
-        df = pd.DataFrame(response.data)
-
+def cargar_datos():
+    """Carga todas las materias primas ordenadas alfabéticamente por nombre."""
+    response = supabase.table("materias_primas").select("*").execute()
+    df = pd.DataFrame(response.data)
+    df = df.sort_values("Materia Prima", ascending=True, na_position="last")
     df["%"] = 0.0
     return df
+
