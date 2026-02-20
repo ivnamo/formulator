@@ -1,0 +1,16 @@
+streamlit
+pandas
+openpyxl
+supabase
+streamlit-aggrid
+qrcode
+Pillow
+streamlit-javascript
+reportlab
+scipy
+deap
+plotly
+
+
+
+
