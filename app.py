@@ -5,8 +5,93 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
+import json
 import streamlit as st
+from streamlit_javascript import st_javascript
 from utils.supabase_client import supabase
+
+# Clave de localStorage para persistir sesión (restaura tras inactividad en Streamlit Cloud)
+FORMULATOR_AUTH = "FORMULATOR_AUTH"
+
+
+def _try_restore_session_from_browser():
+    """
+    Lee localStorage (vía st_javascript), restaura la sesión de Supabase con set_session + refresh_session
+    y, si todo va bien, rellena st.session_state.logged_in y user_email.
+    Si st_javascript devuelve None o hay cualquier error, no modifica session_state (se mostrará login).
+    """
+    js_read = f'''(
+        function() {{
+            try {{
+                return localStorage.getItem("{FORMULATOR_AUTH}");
+            }} catch (e) {{
+                return null;
+            }}
+        }}
+    )()'''
+    stored = st_javascript(js_read, key="auth_restore")
+    if stored is None or not isinstance(stored, str) or not stored.strip():
+        return
+    try:
+        data = json.loads(stored)
+    except json.JSONDecodeError:
+        _clear_auth_storage_js()
+        return
+    access_token = data.get("access_token")
+    refresh_token = data.get("refresh_token")
+    email = data.get("email") or ""
+    if not access_token or not refresh_token:
+        _clear_auth_storage_js()
+        return
+    try:
+        supabase.auth.set_session(access_token, refresh_token)
+        supabase.auth.refresh_session()
+        st.session_state.logged_in = True
+        st.session_state.user_email = email
+        # Opcional: actualizar localStorage con nuevos tokens (refresh_session puede rotar tokens)
+        try:
+            session = supabase.auth.get_session()
+            if session and getattr(session, "session", None):
+                s = session.session
+                at = s.get("access_token") if isinstance(s, dict) else getattr(s, "access_token", None)
+                rt = s.get("refresh_token") if isinstance(s, dict) else getattr(s, "refresh_token", None)
+                if at and rt:
+                    _save_auth_to_storage_js(at, rt, email)
+        except Exception:
+            pass
+    except Exception:
+        _clear_auth_storage_js()
+
+
+def _clear_auth_storage_js():
+    """Ejecuta JS para borrar la clave de auth en localStorage."""
+    st_javascript(
+        f'localStorage.removeItem("{FORMULATOR_AUTH}"); null',
+        key="auth_clear",
+    )
+
+
+def _save_auth_to_storage_js(access_token, refresh_token, email):
+    """Guarda access_token, refresh_token y email en localStorage (vía st_javascript)."""
+    if not access_token or not refresh_token:
+        return
+    payload = json.dumps({
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "email": email or "",
+    })
+    # Escapar para uso dentro de comillas dobles en JS: \ y " y saltos de línea
+    escaped = payload.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r")
+    js_save = f'''(
+        function() {{
+            try {{
+                localStorage.setItem("{FORMULATOR_AUTH}", "{escaped}");
+            }} catch (e) {{}}
+            return null;
+        }}
+    )()'''
+    st_javascript(js_save, key="auth_save")
+
 
 # Módulos materias primas
 from crud_mp.create_materia_prima import crear_materia_prima
@@ -46,6 +131,12 @@ def login():
                 "password": password
             })
             if resp.user:
+                session = getattr(resp, "session", None)
+                if session:
+                    at = session.get("access_token") if isinstance(session, dict) else getattr(session, "access_token", None)
+                    rt = session.get("refresh_token") if isinstance(session, dict) else getattr(session, "refresh_token", None)
+                    if at and rt:
+                        _save_auth_to_storage_js(at, rt, email)
                 st.session_state.logged_in = True
                 st.session_state.user_email = email
                 st.rerun()
@@ -57,6 +148,10 @@ def login():
 
 def main():
     st.set_page_config(layout="wide")
+
+    # 🔐 Restaurar sesión desde localStorage si la conexión se perdió (p. ej. inactividad en Streamlit Cloud)
+    if "logged_in" not in st.session_state or not st.session_state.logged_in:
+        _try_restore_session_from_browser()
 
     # 🔐 Requiere login previo
     if "logged_in" not in st.session_state or not st.session_state.logged_in:
@@ -86,6 +181,7 @@ def main():
         if st.button("🔓 Cerrar sesión"):
             for k in ["logged_in", "user_email"]:
                 st.session_state.pop(k, None)
+            _clear_auth_storage_js()
             st.rerun()
 
         st.markdown("""
