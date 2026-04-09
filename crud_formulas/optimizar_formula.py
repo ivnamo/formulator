@@ -164,7 +164,7 @@ def flujo_optimizar_formula():
                     yaxis_title="Parámetro técnico",
                     height=600
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
 
         

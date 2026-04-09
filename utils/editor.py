@@ -69,7 +69,7 @@ def mostrar_editor_formula(df, seleccionadas):
 
     # Vista con "Porcentaje" renombrado
     df_vista = df_editado.rename(columns={"%": "Porcentaje"}).copy()
-    st.dataframe(df_vista, use_container_width=True)
+    st.dataframe(df_vista, width="stretch")
 
     total_pct = df_editado["%"].sum()
     st.write(f"**Suma total del porcentaje:** {total_pct:.2f}%")

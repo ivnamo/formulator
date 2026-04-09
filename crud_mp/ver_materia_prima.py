@@ -27,4 +27,4 @@ def ver_materia_prima():
         return
 
     st.markdown(f"### 📋 Resultados: {len(df_filtrado)} materia(s) prima(s)")
-    st.dataframe(df_filtrado, use_container_width=True, hide_index=True)
+    st.dataframe(df_filtrado, width="stretch", hide_index=True)
