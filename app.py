@@ -6,6 +6,23 @@
 # ------------------------------------------------------------------------------
 
 import json
+import sys
+from pathlib import Path
+
+# Ensure local project modules are resolved first in Streamlit Cloud.
+PROJECT_ROOT = Path(__file__).resolve().parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+# Avoid conflicts with third-party module named "utils".
+loaded_utils = sys.modules.get("utils")
+if loaded_utils is not None:
+    loaded_utils_file = getattr(loaded_utils, "__file__", "") or ""
+    if loaded_utils_file and str(PROJECT_ROOT) not in loaded_utils_file:
+        for module_name in list(sys.modules.keys()):
+            if module_name == "utils" or module_name.startswith("utils."):
+                sys.modules.pop(module_name, None)
+
 import streamlit as st
 from streamlit_javascript import st_javascript
 from utils.supabase_client import supabase
