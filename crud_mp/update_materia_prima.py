@@ -5,6 +5,7 @@
 # ni distribución sin consentimiento expreso y por escrito del autor.
 # ------------------------------------------------------------------------------
 
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -31,22 +32,39 @@ def actualizar_materia_prima():
         st.info("No hay materias primas disponibles.")
         return
 
-    # Editor nativo de Streamlit (mas estable en Cloud que componentes externos)
-    disabled_columns = ["id"] if "id" in df.columns else []
-    edited_df = st.data_editor(
-        df,
-        num_rows="fixed",
-        hide_index=True,
-        width="stretch",
-        disabled=disabled_columns,
-        key="mp_data_editor",
+    # Tabla editable con AgGrid (misma estrategia que otras vistas que ya funcionan)
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_default_column(
+        editable=True,
+        filter=True,
+        sortable=True,
+        floatingFilter=True,
+        width=120,
+        minWidth=100,
+        resizable=True,
     )
+    if "id" in df.columns:
+        gb.configure_column("id", editable=False)
+    grid_options = gb.build()
+
+    grid_response = AgGrid(
+        df,
+        gridOptions=grid_options,
+        update_mode=GridUpdateMode.VALUE_CHANGED,
+        theme="streamlit",
+        fit_columns_on_grid_load=False,
+        height=600,
+        allow_unsafe_jscode=True,
+        enable_enterprise_modules=False,
+    )
+
+    edited_df = grid_response["data"]
 
     if st.button("💾 Guardar cambios"):
         # 🔧 Limpieza para evitar columnas fantasma y NaN → None
         cleaned_df = pd.DataFrame(edited_df).copy()
 
-        # Columnas auxiliares de editores o índices heredados
+        # Columnas auxiliares de AgGrid o índices heredados
         for col in ["__rowIndex__", "index", "index_level_0", "_index"]:
             if col in cleaned_df.columns:
                 cleaned_df = cleaned_df.drop(columns=[col])
