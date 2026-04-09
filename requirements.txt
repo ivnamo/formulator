@@ -1,15 +1,15 @@
-streamlit
-pandas
-openpyxl
-supabase
-streamlit-aggrid
-qrcode
-Pillow
-streamlit-javascript
-reportlab
-scipy
-deap
-plotly
+streamlit==1.54.0
+pandas==2.3.3
+openpyxl==3.1.5
+supabase==2.28.0
+streamlit-aggrid==1.2.1.post2
+qrcode==8.2
+Pillow==12.1.1
+streamlit-javascript==0.1.5
+reportlab==4.4.10
+scipy==1.17.0
+deap==1.4.3
+plotly==6.5.2
 
 
 
